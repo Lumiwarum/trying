@@ -169,11 +169,11 @@ enum memInsides{
     unknown,safe,inspected,
 }
 enum windRose{
-    N,NE,E,SE,S,SW,W,NW
+    E,SE,S,SW,W,NW,N,NE
 }
 class memoryCell{
     int steps;
-
+    Coordinates previousCell;
 }
 class BackTracking{
     int perception;
