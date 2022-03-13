@@ -205,9 +205,10 @@ class MemoryCell {
     memInsides typeOfCell;
     boolean unvisited;
     MemoryCell(){
-        steps=Integer.MAX_VALUE;
+        steps=-1;
         typeOfCell=memInsides.unknown;
         unvisited=true;
+        previousCell= new Coordinates(-2,-2);
     }
 }
 class BackTracking{
@@ -215,8 +216,9 @@ class BackTracking{
     Game game=new Game();
     boolean hasBook,hasCloak;
     Coordinates position= new Coordinates();
-    Stack<MemoryCell> trace= new Stack<>();
+    Stack<Coordinates> trace= new Stack<>();
     MemoryCell[][] mind=new MemoryCell[9][9];
+    MemoryCell[][] pathToBook=new MemoryCell[9][9];
 
     BackTracking(Game game,int per){
         for (int i=0;i<9;i++){
@@ -230,6 +232,7 @@ class BackTracking{
         this.game=game;
         position=this.game.Harry;
         mind[position.getX()][position.getY()].steps=0;
+        mind[position.getX()][position.getY()].previousCell=new Coordinates(-1,-1);
         take();
         seeCells();
         if (move(getNewCell())){
@@ -325,13 +328,11 @@ class BackTracking{
     boolean move(Coordinates cellMoveInto){
         System.out.println();
         printCells();
-        if (cellMoveInto.getY()==-1&&cellMoveInto.getX()==-1){
-            return false;
-        }
         if (game.space[cellMoveInto.getX()][cellMoveInto.getY()].inspected){
             return false;
         }
         Coordinates previous= new Coordinates(position.getX(), position.getY());
+        trace.add(previous);
         mind[cellMoveInto.getX()][cellMoveInto.getY()].steps=mind[position.getX()][position.getY()].steps+1;
         mind[cellMoveInto.getX()][cellMoveInto.getY()].previousCell=previous;
         position.x=cellMoveInto.getX();
@@ -344,7 +345,7 @@ class BackTracking{
         while (true){
             Coordinates moveNext = getNewCell();
             if (moveNext.getX()==-1&&moveNext.getY()==-1){
-                position=previous;
+                position=trace.pop();
                 break;
             } else {
                 if (move(moveNext)) {
@@ -358,6 +359,7 @@ class BackTracking{
     }
     boolean take(){
         ArrayList<String> insides = game.space[position.getX()][position.getY()].elements;
+        boolean closed=false;
         while (!insides.isEmpty()){
             if(insides.get(0).equals("C")){
                 hasCloak=true;
@@ -374,11 +376,18 @@ class BackTracking{
             }
             if(insides.get(0).equals("B")){
                 hasBook=true;
+                reBuild();
             }
-            if (insides.get(0).equals("E")&&hasBook){
+            if ((insides.get(0).equals("E"))&&(hasBook)){
                 return true;
             }
+            if (insides.get(0).equals("E")){
+                closed=true;
+            }
             insides.remove(0);
+        }
+        if (closed){
+            insides.add("E");
         }
         return false;
     }
@@ -543,5 +552,22 @@ class BackTracking{
                 }
             }
         }
+    }
+    void reBuild(){
+        for (int i=0;i<9;i++){
+            for (int j=0; j<9;j++){
+                pathToBook[i][j]=new MemoryCell();
+                pathToBook[i][j].unvisited=mind[i][j].unvisited;
+                pathToBook[i][j].typeOfCell=mind[i][j].typeOfCell;
+                pathToBook[i][j].steps=mind[i][j].steps;
+                pathToBook[i][j].previousCell= new Coordinates(mind[i][j].previousCell.getX(),mind[i][j].previousCell.getY());
+                mind[i][j].steps=-1;
+                mind[i][j].previousCell=new Coordinates();
+                mind[i][j].unvisited=true;
+                mind[i][j].typeOfCell=memInsides.unknown;
+            }
+        }
+        mind[position.getX()][position.getY()].steps=0;
+        seeCells();
     }
 }
