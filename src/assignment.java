@@ -216,7 +216,7 @@ class BackTracking{
     int perception;
     Game game=new Game();
     boolean hasBook,hasCloak,caught,beforeBook;
-
+    Vision vision;
     Coordinates position= new Coordinates();
     Stack<Coordinates> trace= new Stack<>();
     Stack<Coordinates> traceBook= new Stack<>();
@@ -229,6 +229,7 @@ class BackTracking{
                 mind[i][j]=new MemoryCell();
             }
         }
+        vision= new Vision(per);
         beforeBook=true;
         perception=per;
         hasBook=false;
@@ -240,7 +241,7 @@ class BackTracking{
         mind[position.getX()][position.getY()].unvisited=false;
         mind[position.getX()][position.getY()].previousCell=new Coordinates(-1,-1);
         take();
-        firstSee();
+        vision.firstSee(game,mind,position);
         printResult();
     }
     Coordinates getNewCell(){
@@ -338,17 +339,16 @@ class BackTracking{
         if (caught){
             return false;
         }
-        if (trace.size()>20){
+        if (trace.size()>17){
             return false;
         }
         Coordinates previous= new Coordinates(position.getX(), position.getY());
         trace.add(previous);
-        mind[cellMoveInto.getX()][cellMoveInto.getY()].steps=mind[position.getX()][position.getY()].steps+1;
         mind[cellMoveInto.getX()][cellMoveInto.getY()].previousCell=previous;
         position.x=cellMoveInto.getX();
         position.y=cellMoveInto.getY();
         mind[position.getX()][position.getY()].unvisited=false;
-        seeCells();
+        vision.seeCells(game,mind,position);
         if (take()){
             return true;
         }
@@ -416,7 +416,95 @@ class BackTracking{
             System.out.println();
         }
     }
-    void seeCells(){
+    void reBuild(){
+        for (int i=0;i<9;i++){
+            for (int j=0; j<9;j++){
+                mind[i][j].previousCell=new Coordinates();
+                mind[i][j].unvisited=true;
+            }
+        }
+        traceBook=(Stack<Coordinates>) trace.clone();
+        trace.clear();
+        mind[position.getX()][position.getY()].unvisited=false;
+        vision.seeCells(game,mind,position);
+    }
+    void takeCloak(){
+        hasCloak=true;
+        game.decreasePerception();
+        // clear our mind
+        for (int i=0;i<9;i++){
+            for (int j=0; j<9;j++){
+                mind[i][j].previousCell=new Coordinates();
+                mind[i][j].unvisited=true;
+                if ( mind[i][j].typeOfCell==memInsides.inspected){
+                    mind[i][j].typeOfCell=memInsides.unknown;
+                }
+            }
+        }
+        traceCloak=(Stack<Coordinates>) trace.clone();
+        trace.clear();
+        mind[position.getX()][position.getY()].unvisited=false;
+        vision.seeCells(game,mind,position);
+    }
+    void printResult(){
+        if (move(getNewCell())){
+            if (hasCloak){
+                if (beforeBook) {
+                    Stack<Coordinates> answer=new Stack<>();
+                    trace.add(position);
+                    while (!trace.isEmpty()){
+                        answer.add(trace.pop());
+                    }
+                    while (!traceBook.isEmpty()){
+                        answer.add(traceBook.pop());
+                    }
+                    while (!traceCloak.isEmpty()){
+                        answer.add(traceCloak.pop());
+                    }
+                    while (!answer.isEmpty()){
+                        System.out.print("["+answer.peek().getX()+","+answer.pop().getY()+"]");
+                    }
+                } else {
+                    Stack<Coordinates> answer=new Stack<>();
+                    trace.add(position);
+                    while (!trace.isEmpty()){
+                        answer.add(trace.pop());
+                    }
+                    while (!traceCloak.isEmpty()){
+                        answer.add(traceCloak.pop());
+                    }
+                    while (!traceBook.isEmpty()){
+                        answer.add(traceBook.pop());
+                    }
+                    while (!answer.isEmpty()){
+                        System.out.print("["+answer.peek().getX()+","+answer.pop().getY()+"]");
+                    }
+                }
+            } else {
+                Stack<Coordinates> answer=new Stack<>();
+                trace.add(position);
+                while (!trace.isEmpty()){
+                    answer.add(trace.pop());
+                }
+                while (!traceBook.isEmpty()){
+                    answer.add(traceBook.pop());
+                }
+                while (!answer.isEmpty()){
+                    System.out.print("["+answer.peek().getX()+","+answer.pop().getY()+"]");
+                }
+            }
+        } else {
+            System.out.println("no way");
+        }
+
+    }
+}
+class Vision{
+    int perception;
+    Vision(int n){
+        perception=n;
+    }
+    void seeCells(Game game,MemoryCell[][] mind,Coordinates position){
         if (perception==1) {
             if (position.getX() < 8) {
                 if (game.space[position.getX()+1][position.getY()].inspected) {
@@ -562,12 +650,12 @@ class BackTracking{
             }
         }
     }
-    void firstSee(){
+    void firstSee(Game game,MemoryCell[][] mind,Coordinates position){
         if (perception==1) {
-            seeCells();
+            seeCells(game,mind,position);
         }
         if (perception==2) {
-            seeCells();
+            seeCells(game,mind,position);
             if (position.getX() < 7) {
                 if (!game.space[position.getX() + 2][position.getY()].inspected) {
                     mind[position.getX()+1][position.getX()].typeOfCell= memInsides.safe;
@@ -610,90 +698,9 @@ class BackTracking{
             }
         }
     }
-    void reBuild(){
-        for (int i=0;i<9;i++){
-            for (int j=0; j<9;j++){
-                mind[i][j].steps=-1;
-                mind[i][j].previousCell=new Coordinates();
-                mind[i][j].unvisited=true;
-            }
-        }
-        traceBook=(Stack<Coordinates>) trace.clone();
-        trace.clear();
-        mind[position.getX()][position.getY()].steps=0;
-        mind[position.getX()][position.getY()].unvisited=false;
-        seeCells();
-    }
-    void takeCloak(){
-        hasCloak=true;
-        game.decreasePerception();
-        // clear our mind
-        for (int i=0;i<9;i++){
-            for (int j=0; j<9;j++){
-                mind[i][j].steps=-1;
-                mind[i][j].previousCell=new Coordinates();
-                mind[i][j].unvisited=true;
-                if ( mind[i][j].typeOfCell==memInsides.inspected){
-                    mind[i][j].typeOfCell=memInsides.unknown;
-                }
-            }
-        }
-        traceCloak=(Stack<Coordinates>) trace.clone();
-        trace.clear();
-        mind[position.getX()][position.getY()].steps=0;
-        mind[position.getX()][position.getY()].unvisited=false;
-        seeCells();
-    }
-    void printResult(){
-        if (move(getNewCell())){
-            if (hasCloak){
-                if (beforeBook) {
-                    Stack<Coordinates> answer=new Stack<>();
-                    trace.add(position);
-                    while (!trace.isEmpty()){
-                        answer.add(trace.pop());
-                    }
-                    while (!traceBook.isEmpty()){
-                        answer.add(traceBook.pop());
-                    }
-                    while (!traceCloak.isEmpty()){
-                        answer.add(traceCloak.pop());
-                    }
-                    while (!answer.isEmpty()){
-                        System.out.print("["+answer.peek().getX()+","+answer.pop().getY()+"]");
-                    }
-                } else {
-                    Stack<Coordinates> answer=new Stack<>();
-                    trace.add(position);
-                    while (!trace.isEmpty()){
-                        answer.add(trace.pop());
-                    }
-                    while (!traceCloak.isEmpty()){
-                        answer.add(traceCloak.pop());
-                    }
-                    while (!traceBook.isEmpty()){
-                        answer.add(traceBook.pop());
-                    }
-                    while (!answer.isEmpty()){
-                        System.out.print("["+answer.peek().getX()+","+answer.pop().getY()+"]");
-                    }
-                }
-            } else {
-                Stack<Coordinates> answer=new Stack<>();
-                trace.add(position);
-                while (!trace.isEmpty()){
-                    answer.add(trace.pop());
-                }
-                while (!traceBook.isEmpty()){
-                    answer.add(traceBook.pop());
-                }
-                while (!answer.isEmpty()){
-                    System.out.print("["+answer.peek().getX()+","+answer.pop().getY()+"]");
-                }
-            }
-        } else {
-            System.out.println("no way");
-        }
+}
+class AStar{
+    AStar(){
 
     }
 }
