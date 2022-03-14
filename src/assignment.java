@@ -29,9 +29,9 @@ public class assignment {
     public static void main(String[] args) {
 
         Game igra= new Game();
-        igra.setGame(new Coordinates(0,0),new Coordinates(4,2),new Coordinates(2,7),new Coordinates(7,4),new Coordinates(0,8),new Coordinates(1,4));
+        igra.setGame(new Coordinates(0,0),new Coordinates(5,3),new Coordinates(1,6),new Coordinates(8,8),new Coordinates(0,8),new Coordinates(0,0));
         //igra.printGame();
-        //igra.randomGenerateGame();
+        igra.randomGenerateGame();
         igra.printGame();
         BackTracking alg = new BackTracking(igra,1);
 
@@ -211,14 +211,19 @@ class MemoryCell {
         previousCell= new Coordinates(-2,-2);
     }
 }
+
 class BackTracking{
     int perception;
     Game game=new Game();
-    boolean hasBook,hasCloak;
+    boolean hasBook,hasCloak,caught,beforeBook;
+
     Coordinates position= new Coordinates();
     Stack<Coordinates> trace= new Stack<>();
+    Stack<Coordinates> traceBook= new Stack<>();
+    Stack<Coordinates> traceCloak= new Stack<>();
     MemoryCell[][] mind=new MemoryCell[9][9];
     MemoryCell[][] pathToBook=new MemoryCell[9][9];
+    MemoryCell[][] pathToCloak=new MemoryCell[9][9];
 
     BackTracking(Game game,int per){
         for (int i=0;i<9;i++){
@@ -226,18 +231,19 @@ class BackTracking{
                 mind[i][j]=new MemoryCell();
             }
         }
+        beforeBook=true;
         perception=per;
         hasBook=false;
         hasCloak=false;
+        caught=false;
         this.game=game;
         position=this.game.Harry;
         mind[position.getX()][position.getY()].steps=0;
+        mind[position.getX()][position.getY()].unvisited=false;
         mind[position.getX()][position.getY()].previousCell=new Coordinates(-1,-1);
         take();
-        seeCells();
-        if (move(getNewCell())){
-            System.out.println("smog");
-        }
+        firstSee();
+        printResult();
     }
     Coordinates getNewCell(){
         if (position.getX()<8){
@@ -324,11 +330,17 @@ class BackTracking{
 
         return new Coordinates(-1,-1);
     }
-    // TODO: split search into finding the book and the exit
     boolean move(Coordinates cellMoveInto){
-        System.out.println();
-        printCells();
+        if (cellMoveInto.getX()==-1&&cellMoveInto.getY()==-1){
+            return false;
+        }
         if (game.space[cellMoveInto.getX()][cellMoveInto.getY()].inspected){
+            caught=true;
+        }
+        if (caught){
+            return false;
+        }
+        if (trace.size()>20){
             return false;
         }
         Coordinates previous= new Coordinates(position.getX(), position.getY());
@@ -342,10 +354,16 @@ class BackTracking{
         if (take()){
             return true;
         }
+        ArrayList<Coordinates> visited=new ArrayList<>();
         while (true){
             Coordinates moveNext = getNewCell();
+            visited.add(new Coordinates(moveNext.getX(), moveNext.getY()));
             if (moveNext.getX()==-1&&moveNext.getY()==-1){
-                position=trace.pop();
+                position.x=trace.peek().getX();
+                position.y=trace.pop().getY();
+                for (int i=0;i<visited.size()-1;i++){
+                    mind[visited.get(i).getX()][visited.get(i).getY()].unvisited=true;
+                }
                 break;
             } else {
                 if (move(moveNext)) {
@@ -362,20 +380,13 @@ class BackTracking{
         boolean closed=false;
         while (!insides.isEmpty()){
             if(insides.get(0).equals("C")){
-                hasCloak=true;
-                game.decreasePerception();
-                // clear our mind
-                for (int i=0;i<9;i++){
-                    for (int j=0;j<9;j++){
-                        if (mind[i][j].typeOfCell==memInsides.inspected){
-                            mind[i][j].typeOfCell=memInsides.unknown;
-                        }
-                    }
-                }
-                seeCells();
+                takeCloak();
             }
             if(insides.get(0).equals("B")){
                 hasBook=true;
+                if (!hasCloak){
+                    beforeBook=false;
+                }
                 reBuild();
             }
             if ((insides.get(0).equals("E"))&&(hasBook)){
@@ -553,6 +564,54 @@ class BackTracking{
             }
         }
     }
+    void firstSee(){
+        if (perception==1) {
+            seeCells();
+        }
+        if (perception==2) {
+            seeCells();
+            if (position.getX() < 7) {
+                if (!game.space[position.getX() + 2][position.getY()].inspected) {
+                    mind[position.getX()+1][position.getX()].typeOfCell= memInsides.safe;
+                }
+            }
+            if ((position.getX() < 7) &&(position.getY() < 7)) {
+                if ((!game.space[position.getX() + 2][position.getY()+1].inspected)&&(!game.space[position.getX() + 1][position.getY()+2].inspected)) {
+                    mind[position.getX() + 1][position.getY() + 1].typeOfCell = memInsides.safe;
+                }
+            }
+            if (position.getY() < 7) {
+                if (!game.space[position.getX()][position.getY() + 2].inspected) {
+                    mind[position.getX()][position.getY() + 1].typeOfCell = memInsides.safe;
+                }
+            }
+            if ((position.getX() > 1) && (position.getY() < 7)) {
+                if ((!game.space[position.getX() - 1][position.getY() + 2].inspected)&&(!game.space[position.getX() - 2][position.getY() + 1].inspected)) {
+                    mind[position.getX() - 1][position.getY() + 1].typeOfCell = memInsides.safe;
+                }
+            }
+            if (position.getX() > 1) {
+                if (!game.space[position.getX() - 2][position.getY()].inspected) {
+                    mind[position.getX() - 1][position.getY()].typeOfCell = memInsides.safe;
+                }
+            }
+            if ((position.getX() > 1) && (position.getY() > 1)) {
+                if ((!game.space[position.getX() - 2][position.getY() - 1].inspected)&&(!game.space[position.getX() - 1][position.getY() - 2].inspected)) {
+                    mind[position.getX() - 1][position.getY() - 1].typeOfCell = memInsides.safe;
+                }
+            }
+            if (position.getY() > 1) {
+                if (!game.space[position.getX()][position.getY() - 2].inspected) {
+                    mind[position.getX()][position.getY() - 1].typeOfCell = memInsides.safe;
+                }
+            }
+            if ((position.getX() < 7) && (position.getY() > 1)) {
+                if ((!game.space[position.getX() + 1][position.getY() - 2].inspected)&&(!game.space[position.getX() + 2][position.getY() - 1].inspected)) {
+                    mind[position.getX() + 1][position.getY() - 1].typeOfCell = memInsides.safe;
+                }
+            }
+        }
+    }
     void reBuild(){
         for (int i=0;i<9;i++){
             for (int j=0; j<9;j++){
@@ -564,10 +623,113 @@ class BackTracking{
                 mind[i][j].steps=-1;
                 mind[i][j].previousCell=new Coordinates();
                 mind[i][j].unvisited=true;
-                mind[i][j].typeOfCell=memInsides.unknown;
             }
         }
+        trace.clear();
         mind[position.getX()][position.getY()].steps=0;
+        mind[position.getX()][position.getY()].unvisited=false;
         seeCells();
+    }
+    void takeCloak(){
+        hasCloak=true;
+        game.decreasePerception();
+        // clear our mind
+        for (int i=0;i<9;i++){
+            for (int j=0; j<9;j++){
+                pathToCloak[i][j]=new MemoryCell();
+                pathToCloak[i][j].unvisited=mind[i][j].unvisited;
+                pathToCloak[i][j].typeOfCell=mind[i][j].typeOfCell;
+                pathToCloak[i][j].steps=mind[i][j].steps;
+                pathToCloak[i][j].previousCell= new Coordinates(mind[i][j].previousCell.getX(),mind[i][j].previousCell.getY());
+                mind[i][j].steps=-1;
+                mind[i][j].previousCell=new Coordinates();
+                mind[i][j].unvisited=true;
+                if ( mind[i][j].typeOfCell==memInsides.inspected){
+                    mind[i][j].typeOfCell=memInsides.unknown;
+                }
+            }
+        }
+        trace.clear();
+        mind[position.getX()][position.getY()].steps=0;
+        mind[position.getX()][position.getY()].unvisited=false;
+        seeCells();
+    }
+    void printResult(){
+        if (move(getNewCell())){
+            if (hasCloak){
+                if (beforeBook) {
+                    Stack<String> answer = new Stack<>();
+                    Coordinates current = new Coordinates(game.Exit.getX(), game.Exit.getY());
+                    int steps = mind[position.getX()][position.getY()].steps;
+                    answer.add("[" + current.getX() + "," + current.getY() + "]");
+                    for (int i = 0; i < steps; i++) {
+                        current = mind[current.getX()][current.getY()].previousCell;
+                        answer.add("[" + current.getX() + "," + current.getY() + "]");
+                    }
+                    current = new Coordinates(game.Book.getX(), game.Book.getY());
+                    steps = pathToBook[game.Book.getX()][game.Book.getY()].steps;
+                    for (int i = 0; i < steps; i++) {
+                        current = pathToBook[current.getX()][current.getY()].previousCell;
+                        answer.add("[" + current.getX() + "," + current.getY() + "]");
+                    }
+                    current = new Coordinates(game.Cloak.getX(), game.Cloak.getY());
+                    steps = pathToCloak[game.Cloak.getX()][game.Cloak.getY()].steps;
+                    for (int i = 0; i < steps; i++) {
+                        current = pathToCloak[current.getX()][current.getY()].previousCell;
+                        answer.add("[" + current.getX() + "," + current.getY() + "]");
+                    }
+                    while (!answer.isEmpty()) {
+                        System.out.print(answer.pop());
+                    }
+                } else {
+                    Stack<String> answer = new Stack<>();
+                    Coordinates current = new Coordinates(game.Exit.getX(), game.Exit.getY());
+                    int steps = mind[position.getX()][position.getY()].steps;
+                    answer.add("[" + current.getX() + "," + current.getY() + "]");
+                    for (int i = 0; i < steps; i++) {
+                        current = mind[current.getX()][current.getY()].previousCell;
+                        answer.add("[" + current.getX() + "," + current.getY() + "]");
+                    }
+
+                    current = new Coordinates(game.Cloak.getX(), game.Cloak.getY());
+                    steps = pathToCloak[game.Cloak.getX()][game.Cloak.getY()].steps;
+                    for (int i = 0; i < steps; i++) {
+                        current = pathToCloak[current.getX()][current.getY()].previousCell;
+                        answer.add("[" + current.getX() + "," + current.getY() + "]");
+                    }
+                    current = new Coordinates(game.Book.getX(), game.Book.getY());
+                    steps = pathToBook[game.Book.getX()][game.Book.getY()].steps;
+                    for (int i = 0; i < steps; i++) {
+                        current = pathToBook[current.getX()][current.getY()].previousCell;
+                        answer.add("[" + current.getX() + "," + current.getY() + "]");
+                    }
+
+                    while (!answer.isEmpty()) {
+                        System.out.print(answer.pop());
+                    }
+                }
+            } else {
+                Stack<String> answer = new Stack<>();
+                Coordinates current = new Coordinates(game.Exit.getX(), game.Exit.getY());
+                int steps = mind[position.getX()][position.getY()].steps;
+                answer.add("[" + current.getX() + "," + current.getY() + "]");
+                for (int i = 0; i < steps; i++) {
+                    current = mind[current.getX()][current.getY()].previousCell;
+                    answer.add("[" + current.getX() + "," + current.getY() + "]");
+                }
+                current = new Coordinates(game.Book.getX(), game.Book.getY());
+                steps = pathToBook[game.Book.getX()][game.Book.getY()].steps;
+                for (int i = 0; i < steps; i++) {
+                    current = pathToBook[current.getX()][current.getY()].previousCell;
+                    answer.add("[" + current.getX() + "," + current.getY() + "]");
+                }
+                while (!answer.isEmpty()) {
+                    System.out.print(answer.pop());
+                }
+            }
+        } else {
+            System.out.println("no way");
+        }
+
     }
 }
