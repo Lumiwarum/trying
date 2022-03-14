@@ -31,7 +31,7 @@ public class assignment {
         Game igra= new Game();
         igra.setGame(new Coordinates(0,0),new Coordinates(5,3),new Coordinates(1,6),new Coordinates(8,8),new Coordinates(0,8),new Coordinates(0,0));
         //igra.printGame();
-        igra.randomGenerateGame();
+        //igra.randomGenerateGame();
         igra.printGame();
         BackTracking alg = new BackTracking(igra,1);
 
@@ -222,8 +222,6 @@ class BackTracking{
     Stack<Coordinates> traceBook= new Stack<>();
     Stack<Coordinates> traceCloak= new Stack<>();
     MemoryCell[][] mind=new MemoryCell[9][9];
-    MemoryCell[][] pathToBook=new MemoryCell[9][9];
-    MemoryCell[][] pathToCloak=new MemoryCell[9][9];
 
     BackTracking(Game game,int per){
         for (int i=0;i<9;i++){
@@ -615,16 +613,12 @@ class BackTracking{
     void reBuild(){
         for (int i=0;i<9;i++){
             for (int j=0; j<9;j++){
-                pathToBook[i][j]=new MemoryCell();
-                pathToBook[i][j].unvisited=mind[i][j].unvisited;
-                pathToBook[i][j].typeOfCell=mind[i][j].typeOfCell;
-                pathToBook[i][j].steps=mind[i][j].steps;
-                pathToBook[i][j].previousCell= new Coordinates(mind[i][j].previousCell.getX(),mind[i][j].previousCell.getY());
                 mind[i][j].steps=-1;
                 mind[i][j].previousCell=new Coordinates();
                 mind[i][j].unvisited=true;
             }
         }
+        traceBook=(Stack<Coordinates>) trace.clone();
         trace.clear();
         mind[position.getX()][position.getY()].steps=0;
         mind[position.getX()][position.getY()].unvisited=false;
@@ -636,11 +630,6 @@ class BackTracking{
         // clear our mind
         for (int i=0;i<9;i++){
             for (int j=0; j<9;j++){
-                pathToCloak[i][j]=new MemoryCell();
-                pathToCloak[i][j].unvisited=mind[i][j].unvisited;
-                pathToCloak[i][j].typeOfCell=mind[i][j].typeOfCell;
-                pathToCloak[i][j].steps=mind[i][j].steps;
-                pathToCloak[i][j].previousCell= new Coordinates(mind[i][j].previousCell.getX(),mind[i][j].previousCell.getY());
                 mind[i][j].steps=-1;
                 mind[i][j].previousCell=new Coordinates();
                 mind[i][j].unvisited=true;
@@ -649,6 +638,7 @@ class BackTracking{
                 }
             }
         }
+        traceCloak=(Stack<Coordinates>) trace.clone();
         trace.clear();
         mind[position.getX()][position.getY()].steps=0;
         mind[position.getX()][position.getY()].unvisited=false;
@@ -658,73 +648,47 @@ class BackTracking{
         if (move(getNewCell())){
             if (hasCloak){
                 if (beforeBook) {
-                    Stack<String> answer = new Stack<>();
-                    Coordinates current = new Coordinates(game.Exit.getX(), game.Exit.getY());
-                    int steps = mind[position.getX()][position.getY()].steps;
-                    answer.add("[" + current.getX() + "," + current.getY() + "]");
-                    for (int i = 0; i < steps; i++) {
-                        current = mind[current.getX()][current.getY()].previousCell;
-                        answer.add("[" + current.getX() + "," + current.getY() + "]");
+                    Stack<Coordinates> answer=new Stack<>();
+                    trace.add(position);
+                    while (!trace.isEmpty()){
+                        answer.add(trace.pop());
                     }
-                    current = new Coordinates(game.Book.getX(), game.Book.getY());
-                    steps = pathToBook[game.Book.getX()][game.Book.getY()].steps;
-                    for (int i = 0; i < steps; i++) {
-                        current = pathToBook[current.getX()][current.getY()].previousCell;
-                        answer.add("[" + current.getX() + "," + current.getY() + "]");
+                    while (!traceBook.isEmpty()){
+                        answer.add(traceBook.pop());
                     }
-                    current = new Coordinates(game.Cloak.getX(), game.Cloak.getY());
-                    steps = pathToCloak[game.Cloak.getX()][game.Cloak.getY()].steps;
-                    for (int i = 0; i < steps; i++) {
-                        current = pathToCloak[current.getX()][current.getY()].previousCell;
-                        answer.add("[" + current.getX() + "," + current.getY() + "]");
+                    while (!traceCloak.isEmpty()){
+                        answer.add(traceCloak.pop());
                     }
-                    while (!answer.isEmpty()) {
-                        System.out.print(answer.pop());
+                    while (!answer.isEmpty()){
+                        System.out.print("["+answer.peek().getX()+","+answer.pop().getY()+"]");
                     }
                 } else {
-                    Stack<String> answer = new Stack<>();
-                    Coordinates current = new Coordinates(game.Exit.getX(), game.Exit.getY());
-                    int steps = mind[position.getX()][position.getY()].steps;
-                    answer.add("[" + current.getX() + "," + current.getY() + "]");
-                    for (int i = 0; i < steps; i++) {
-                        current = mind[current.getX()][current.getY()].previousCell;
-                        answer.add("[" + current.getX() + "," + current.getY() + "]");
+                    Stack<Coordinates> answer=new Stack<>();
+                    trace.add(position);
+                    while (!trace.isEmpty()){
+                        answer.add(trace.pop());
                     }
-
-                    current = new Coordinates(game.Cloak.getX(), game.Cloak.getY());
-                    steps = pathToCloak[game.Cloak.getX()][game.Cloak.getY()].steps;
-                    for (int i = 0; i < steps; i++) {
-                        current = pathToCloak[current.getX()][current.getY()].previousCell;
-                        answer.add("[" + current.getX() + "," + current.getY() + "]");
+                    while (!traceCloak.isEmpty()){
+                        answer.add(traceCloak.pop());
                     }
-                    current = new Coordinates(game.Book.getX(), game.Book.getY());
-                    steps = pathToBook[game.Book.getX()][game.Book.getY()].steps;
-                    for (int i = 0; i < steps; i++) {
-                        current = pathToBook[current.getX()][current.getY()].previousCell;
-                        answer.add("[" + current.getX() + "," + current.getY() + "]");
+                    while (!traceBook.isEmpty()){
+                        answer.add(traceBook.pop());
                     }
-
-                    while (!answer.isEmpty()) {
-                        System.out.print(answer.pop());
+                    while (!answer.isEmpty()){
+                        System.out.print("["+answer.peek().getX()+","+answer.pop().getY()+"]");
                     }
                 }
             } else {
-                Stack<String> answer = new Stack<>();
-                Coordinates current = new Coordinates(game.Exit.getX(), game.Exit.getY());
-                int steps = mind[position.getX()][position.getY()].steps;
-                answer.add("[" + current.getX() + "," + current.getY() + "]");
-                for (int i = 0; i < steps; i++) {
-                    current = mind[current.getX()][current.getY()].previousCell;
-                    answer.add("[" + current.getX() + "," + current.getY() + "]");
+                Stack<Coordinates> answer=new Stack<>();
+                trace.add(position);
+                while (!trace.isEmpty()){
+                    answer.add(trace.pop());
                 }
-                current = new Coordinates(game.Book.getX(), game.Book.getY());
-                steps = pathToBook[game.Book.getX()][game.Book.getY()].steps;
-                for (int i = 0; i < steps; i++) {
-                    current = pathToBook[current.getX()][current.getY()].previousCell;
-                    answer.add("[" + current.getX() + "," + current.getY() + "]");
+                while (!traceBook.isEmpty()){
+                    answer.add(traceBook.pop());
                 }
-                while (!answer.isEmpty()) {
-                    System.out.print(answer.pop());
+                while (!answer.isEmpty()){
+                    System.out.print("["+answer.peek().getX()+","+answer.pop().getY()+"]");
                 }
             }
         } else {
