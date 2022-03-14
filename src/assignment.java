@@ -2,9 +2,7 @@ import com.sun.xml.internal.bind.v2.TODO;
 import sun.misc.Queue;
 
 import java.sql.SQLOutput;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Stack;
+import java.util.*;
 
 enum insides {
     Harry,Filch,Book,Cloak,Norris,Exit,inspectorZone
@@ -24,16 +22,30 @@ class Coordinates{
     int getY(){
         return y;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Coordinates that = (Coordinates) o;
+        return x == that.x && y == that.y;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(x, y);
+    }
 }
 public class assignment {
     public static void main(String[] args) {
 
         Game igra= new Game();
-        igra.setGame(new Coordinates(0,0),new Coordinates(5,3),new Coordinates(1,6),new Coordinates(8,8),new Coordinates(0,8),new Coordinates(0,0));
+        //igra.setGame(new Coordinates(0,0),new Coordinates(8,3),new Coordinates(5,0),new Coordinates(5,3),new Coordinates(0,1),new Coordinates(7,0));
         //igra.printGame();
         //igra.randomGenerateGame();
-        igra.printGame();
-        BackTracking alg = new BackTracking(igra,1);
+        //igra.printGame();
+        //BackTracking alg = new BackTracking(igra,1);
+        AStar star=new AStar(1,igra);
 
    }
 }
@@ -200,15 +212,11 @@ enum memInsides{
 }
 
 class MemoryCell {
-    int steps;
-    Coordinates previousCell;
     memInsides typeOfCell;
     boolean unvisited;
     MemoryCell(){
-        steps=-1;
         typeOfCell=memInsides.unknown;
         unvisited=true;
-        previousCell= new Coordinates(-2,-2);
     }
 }
 
@@ -237,9 +245,7 @@ class BackTracking{
         caught=false;
         this.game=game;
         position=this.game.Harry;
-        mind[position.getX()][position.getY()].steps=0;
         mind[position.getX()][position.getY()].unvisited=false;
-        mind[position.getX()][position.getY()].previousCell=new Coordinates(-1,-1);
         take();
         vision.firstSee(game,mind,position);
         printResult();
@@ -344,7 +350,6 @@ class BackTracking{
         }
         Coordinates previous= new Coordinates(position.getX(), position.getY());
         trace.add(previous);
-        mind[cellMoveInto.getX()][cellMoveInto.getY()].previousCell=previous;
         position.x=cellMoveInto.getX();
         position.y=cellMoveInto.getY();
         mind[position.getX()][position.getY()].unvisited=false;
@@ -419,7 +424,6 @@ class BackTracking{
     void reBuild(){
         for (int i=0;i<9;i++){
             for (int j=0; j<9;j++){
-                mind[i][j].previousCell=new Coordinates();
                 mind[i][j].unvisited=true;
             }
         }
@@ -434,7 +438,6 @@ class BackTracking{
         // clear our mind
         for (int i=0;i<9;i++){
             for (int j=0; j<9;j++){
-                mind[i][j].previousCell=new Coordinates();
                 mind[i][j].unvisited=true;
                 if ( mind[i][j].typeOfCell==memInsides.inspected){
                     mind[i][j].typeOfCell=memInsides.unknown;
@@ -699,8 +702,140 @@ class Vision{
         }
     }
 }
-class AStar{
-    AStar(){
+class StarCell implements Comparable<StarCell>{
+    int g,h,f;
+    memInsides typeOfCell;
+    StarCell(int g,int h){
+        this.g=g;
+        this.h=h;
+        typeOfCell=memInsides.unknown;
+    }
+    StarCell(){
+        g=99;
+        h=99;
+        typeOfCell=memInsides.unknown;
+    }
+    void printH(){
+        System.out.print(h);
+    }
+    void printG(){
+        System.out.print(g);
+    }
+    int getF(){
+        f=g+h;
+        return g+h;
+    }
 
+    @Override
+    public int compareTo(StarCell o) {
+        if (this.typeOfCell==memInsides.safe&&o.typeOfCell==memInsides.unknown){
+            return 1;
+        }
+        if (this.typeOfCell==memInsides.unknown&&o.typeOfCell==memInsides.safe){
+            return -1;
+        }
+        if (this.f>o.f){
+            return 1;
+        } else {
+            if (this.f<o.f){
+                return -1;
+            } else {
+                if (this.h>o.h){
+                    return 1;
+                } else {
+                    if (this.h<o.f){
+                        return -1;
+                    } else {
+                        return 0;
+                    }
+                }
+            }
+        }
+    }
+}
+class AStar{
+    Vision vision;
+    StarCell[][] mind= new StarCell[9][9];
+    HashSet<Coordinates> closed=new HashSet<>();
+    Game game;
+    Coordinates position=new Coordinates();
+    PriorityQueue<StarCell> open= new PriorityQueue<>();
+    AStar(int per,Game game){
+        this.game=game;
+        vision=new Vision(per);
+        for (int i=0;i<9;i++){
+            for (int j=0;j<9;j++){
+                mind[i][j]=new StarCell(0,0);
+            }
+        }
+        setHeuristic(new Coordinates(8,8));
+        printHeuristic();
+    }
+    void addCells(){
+        if (position.getX() < 8) {
+            if ((mind[position.getX()+1][position.getY()].typeOfCell!=memInsides.inspected)&&(closed.contains(new Coordinates(position.getX()+1,position.getY())))) {
+                open.add(mind[position.getX()+1][position.getY()]);
+            }
+        }
+        if ((position.getX() < 8) && (position.getY() < 8)) {
+            if ((mind[position.getX() + 1][position.getY()+1].typeOfCell!=memInsides.inspected)&&(closed.contains(new Coordinates(position.getX()+1,position.getY()+1)))) {
+                open.add(mind[position.getX()+1][position.getY()+1]);
+            }
+        }
+        if (position.getY() < 8) {
+            if ((mind[position.getX()][position.getY() + 1].typeOfCell!=memInsides.inspected)&&(closed.contains(new Coordinates(position.getX(),position.getY()+1)))) {
+                open.add(mind[position.getX()][position.getY()+1]);
+            }
+        }
+        if ((position.getX() > 0) && (position.getY() < 8)) {
+            if ((mind[position.getX() - 1][position.getY()+1].typeOfCell!=memInsides.inspected)&&(closed.contains(new Coordinates(position.getX()-1,position.getY()+1)))) {
+                open.add(mind[position.getX() - 1][position.getY() + 1]);
+            }
+        }
+        if (position.getX() > 0) {
+            if ((mind[position.getX() - 1][position.getY()].typeOfCell!=memInsides.inspected)&&(closed.contains(new Coordinates(position.getX()-1,position.getY())))) {
+                open.add(mind[position.getX()-1][position.getY()]);
+            }
+        }
+        if ((position.getX() > 0) && (position.getY() > 0)) {
+            if ((mind[position.getX() - 1][position.getY() - 1].typeOfCell!=memInsides.inspected)&&(closed.contains(new Coordinates(position.getX()-1,position.getY()-1)))) {
+                open.add(mind[position.getX()-1][position.getY()-1]);
+            }
+        }
+        if (position.getY() > 0) {
+            if ((mind[position.getX()][position.getY() - 1].typeOfCell!=memInsides.inspected)&&(closed.contains(new Coordinates(position.getX(),position.getY()-1)))) {
+                open.add(mind[position.getX()][position.getY()-1]);
+            }
+        }
+        if ((position.getX() < 8) && (position.getY() > 0)) {
+            if ((mind[position.getX() + 1][position.getY() - 1].typeOfCell!=memInsides.inspected)&&(closed.contains(new Coordinates(position.getX()+1,position.getY()-1)))) {
+                open.add(mind[position.getX()+1][position.getY()-1]);
+            }
+        }
+    }
+    void setHeuristic(Coordinates goal){
+        for (int i=0;i<9;i++){
+            for (int j=0; j<9;j++){
+                mind[i][j].h=Math.max(Math.abs(i- goal.getX()),Math.abs(j- goal.getY()));
+            }
+        }
+    }
+    void printHeuristic(){
+        for (int i=8;i>=0;i--){
+            for (int j=0; j<9;j++){
+                mind[i][j].printH();
+                System.out.print(" ");
+            }
+            System.out.println();
+        }
+    }
+    void printMovements(){
+        for (int i=8;i>=0;i--){
+            for (int j=0; j<9;j++){
+                mind[i][j].printG();
+                System.out.print(" ");
+            }
+            System.out.println();
+        }
     }
 }
