@@ -40,12 +40,13 @@ public class assignment {
     public static void main(String[] args) {
 
         Game igra= new Game();
-        //igra.setGame(new Coordinates(0,0),new Coordinates(8,3),new Coordinates(5,0),new Coordinates(5,3),new Coordinates(0,1),new Coordinates(7,0));
-        //igra.printGame();
+        igra.setGame(new Coordinates(0,0),new Coordinates(4,2),new Coordinates(2,7),new Coordinates(7,4),new Coordinates(0,8),new Coordinates(1,4));
+        igra.printGame();
         //igra.randomGenerateGame();
-        //igra.printGame();
         //BackTracking alg = new BackTracking(igra,1);
         AStar star=new AStar(1,igra);
+        System.out.println(star.book.getX()+" "+star.book.getY());
+        star.algorithm();
 
    }
 }
@@ -702,17 +703,20 @@ class Vision{
         }
     }
 }
-class StarCell implements Comparable<StarCell>{
+class StarCell extends MemoryCell implements Comparable<StarCell>{
     int g,h,f;
-    memInsides typeOfCell;
+    int x,y;
+    int parentX,parentY;
     StarCell(int g,int h){
         this.g=g;
         this.h=h;
         typeOfCell=memInsides.unknown;
     }
     StarCell(){
+        parentX=-1;
+        parentY=-1;
         g=99;
-        h=99;
+        h=0;
         typeOfCell=memInsides.unknown;
     }
     void printH(){
@@ -724,6 +728,11 @@ class StarCell implements Comparable<StarCell>{
     int getF(){
         f=g+h;
         return g+h;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(g, h, f, x, y, parentX, parentY);
     }
 
     @Override
@@ -759,64 +768,248 @@ class AStar{
     HashSet<Coordinates> closed=new HashSet<>();
     Game game;
     Coordinates position=new Coordinates();
+    boolean reachable;
+    Coordinates cloak,book;
     PriorityQueue<StarCell> open= new PriorityQueue<>();
     AStar(int per,Game game){
+        reachable=false;
         this.game=game;
         vision=new Vision(per);
         for (int i=0;i<9;i++){
             for (int j=0;j<9;j++){
-                mind[i][j]=new StarCell(0,0);
+                mind[i][j]=new StarCell();
+                mind[i][j].x=i;
+                mind[i][j].y=j;
             }
         }
-        setHeuristic(new Coordinates(8,8));
-        printHeuristic();
+        BFS();
     }
     void addCells(){
         if (position.getX() < 8) {
-            if ((mind[position.getX()+1][position.getY()].typeOfCell!=memInsides.inspected)&&(closed.contains(new Coordinates(position.getX()+1,position.getY())))) {
-                open.add(mind[position.getX()+1][position.getY()]);
+            if (open.contains(mind[position.getX()+1][position.getY()])){
+                if ((mind[position.x][position.y].g+1<mind[position.getX()+1][position.getY()].g)) {
+                    mind[position.getX() + 1][position.getY()].g = mind[position.x][position.y].g + 1;
+                    mind[position.getX() + 1][position.getY()].parentX = position.getX();
+                    mind[position.getX() + 1][position.getY()].parentY = position.getY();
+                }
+            } else {
+                if ((mind[position.getX() + 1][position.getY()].typeOfCell != memInsides.inspected) && (!closed.contains(new Coordinates(position.getX() + 1, position.getY())))) {
+                    open.add(mind[position.getX() + 1][position.getY()]);
+                    mind[position.getX() + 1][position.getY()].g = mind[position.getX()][position.getY()].g + 1;
+                    mind[position.getX() + 1][position.getY()].parentX = position.getX();
+                    mind[position.getX() + 1][position.getY()].parentY = position.getY();
+                }
             }
         }
         if ((position.getX() < 8) && (position.getY() < 8)) {
-            if ((mind[position.getX() + 1][position.getY()+1].typeOfCell!=memInsides.inspected)&&(closed.contains(new Coordinates(position.getX()+1,position.getY()+1)))) {
-                open.add(mind[position.getX()+1][position.getY()+1]);
+            if (open.contains(mind[position.getX()+1][position.getY()+1])){
+                if ((mind[position.x][position.y].g+1<mind[position.getX()+1][position.getY()+1].g)) {
+                    mind[position.getX() + 1][position.getY() + 1].g = mind[position.x][position.y].g + 1;
+                    mind[position.getX() + 1][position.getY() + 1].parentX = position.getX();
+                    mind[position.getX() + 1][position.getY() + 1].parentY = position.getY();
+                }
+
+            } else {
+                if ((mind[position.getX() + 1][position.getY() + 1].typeOfCell != memInsides.inspected) && (!closed.contains(new Coordinates(position.getX() + 1, position.getY() + 1)))) {
+                    open.add(mind[position.getX() + 1][position.getY() + 1]);
+                    mind[position.getX() + 1][position.getY() + 1].g = mind[position.getX()][position.getY()].g + 1;
+                    mind[position.getX() + 1][position.getY() + 1].parentX = position.getX();
+                    mind[position.getX() + 1][position.getY() + 1].parentY = position.getY();
+                }
             }
         }
         if (position.getY() < 8) {
-            if ((mind[position.getX()][position.getY() + 1].typeOfCell!=memInsides.inspected)&&(closed.contains(new Coordinates(position.getX(),position.getY()+1)))) {
-                open.add(mind[position.getX()][position.getY()+1]);
+            if (open.contains(mind[position.getX()][position.getY()+1])){
+                if (mind[position.x][position.y].g+1<mind[position.getX()][position.getY()+1].g) {
+                    mind[position.getX()][position.getY() + 1].g = mind[position.x][position.y].g + 1;
+                    mind[position.getX()][position.getY() + 1].parentX = position.getX();
+                    mind[position.getX()][position.getY() + 1].parentY = position.getY();
+                }
+            } else {
+                if ((mind[position.getX()][position.getY() + 1].typeOfCell != memInsides.inspected) && (!closed.contains(new Coordinates(position.getX(), position.getY() + 1)))) {
+                    open.add(mind[position.getX()][position.getY() + 1]);
+                    mind[position.getX()][position.getY() + 1].g = mind[position.getX()][position.getY()].g + 1;
+                    mind[position.getX()][position.getY() + 1].parentX = position.getX();
+                    mind[position.getX()][position.getY() + 1].parentY = position.getY();
+                }
             }
         }
         if ((position.getX() > 0) && (position.getY() < 8)) {
-            if ((mind[position.getX() - 1][position.getY()+1].typeOfCell!=memInsides.inspected)&&(closed.contains(new Coordinates(position.getX()-1,position.getY()+1)))) {
-                open.add(mind[position.getX() - 1][position.getY() + 1]);
+            if (open.contains(mind[position.getX()-1][position.getY()+1])){
+                if (mind[position.x][position.y].g+1<mind[position.getX()-1][position.getY()+1].g) {
+                    mind[position.getX() - 1][position.getY() + 1].g = mind[position.x][position.y].g + 1;
+                    mind[position.getX() - 1][position.getY() + 1].parentX = position.getX();
+                    mind[position.getX() - 1][position.getY() + 1].parentY = position.getY();
+                }
+            } else {
+                if ((mind[position.getX() - 1][position.getY() + 1].typeOfCell != memInsides.inspected) && (!closed.contains(new Coordinates(position.getX() - 1, position.getY() + 1)))) {
+                    open.add(mind[position.getX() - 1][position.getY() + 1]);
+                    mind[position.getX() - 1][position.getY() + 1].g = mind[position.getX()][position.getY()].g + 1;
+                    mind[position.getX() - 1][position.getY() + 1].parentX = position.getX();
+                    mind[position.getX() - 1][position.getY() + 1].parentY = position.getY();
+                }
             }
         }
         if (position.getX() > 0) {
-            if ((mind[position.getX() - 1][position.getY()].typeOfCell!=memInsides.inspected)&&(closed.contains(new Coordinates(position.getX()-1,position.getY())))) {
-                open.add(mind[position.getX()-1][position.getY()]);
+            if (open.contains(mind[position.getX()-1][position.getY()])){
+                if (mind[position.x][position.y].g+1<mind[position.getX()-1][position.getY()].g) {
+                    mind[position.getX() - 1][position.getY()].g = mind[position.x][position.y].g + 1;
+                    mind[position.getX() - 1][position.getY()].parentX = position.getX();
+                    mind[position.getX() - 1][position.getY()].parentY = position.getY();
+                }
+            } else {
+                if ((mind[position.getX() - 1][position.getY()].typeOfCell != memInsides.inspected) && (!closed.contains(new Coordinates(position.getX() - 1, position.getY())))) {
+                    open.add(mind[position.getX() - 1][position.getY()]);
+                    mind[position.getX() - 1][position.getY()].g = mind[position.getX()][position.getY()].g + 1;
+                    mind[position.getX() - 1][position.getY()].parentX = position.getX();
+                    mind[position.getX() - 1][position.getY()].parentY = position.getY();
+                }
             }
         }
         if ((position.getX() > 0) && (position.getY() > 0)) {
-            if ((mind[position.getX() - 1][position.getY() - 1].typeOfCell!=memInsides.inspected)&&(closed.contains(new Coordinates(position.getX()-1,position.getY()-1)))) {
-                open.add(mind[position.getX()-1][position.getY()-1]);
+            if (open.contains(mind[position.getX()-1][position.getY()-1])){
+                if (mind[position.x][position.y].g+1<mind[position.getX()-1][position.getY()-1].g) {
+                    mind[position.getX() - 1][position.getY() - 1].g = mind[position.x][position.y].g + 1;
+                    mind[position.getX() - 1][position.getY() - 1].parentX = position.getX();
+                    mind[position.getX() - 1][position.getY() - 1].parentY = position.getY();
+                }
+            } else {
+                if ((mind[position.getX() - 1][position.getY() - 1].typeOfCell != memInsides.inspected) && (!closed.contains(new Coordinates(position.getX() - 1, position.getY() - 1)))) {
+                    open.add(mind[position.getX() - 1][position.getY() - 1]);
+                    mind[position.getX() - 1][position.getY() - 1].g = mind[position.getX()][position.getY()].g + 1;
+                    mind[position.getX() - 1][position.getY() - 1].parentX = position.getX();
+                    mind[position.getX() - 1][position.getY() - 1].parentY = position.getY();
+                }
             }
         }
         if (position.getY() > 0) {
-            if ((mind[position.getX()][position.getY() - 1].typeOfCell!=memInsides.inspected)&&(closed.contains(new Coordinates(position.getX(),position.getY()-1)))) {
-                open.add(mind[position.getX()][position.getY()-1]);
+            if (open.contains(mind[position.getX()][position.getY()-1])){
+                if (mind[position.x][position.y].g+1<mind[position.getX()][position.getY()-1].g) {
+                    mind[position.getX()][position.getY() - 1].g = mind[position.x][position.y].g + 1;
+                    mind[position.getX()][position.getY() - 1].parentX = position.getX();
+                    mind[position.getX()][position.getY() - 1].parentY = position.getY();
+                }
+            } else {
+                if ((mind[position.getX()][position.getY() - 1].typeOfCell != memInsides.inspected) && (!closed.contains(new Coordinates(position.getX(), position.getY() - 1)))) {
+                    open.add(mind[position.getX()][position.getY() - 1]);
+                    mind[position.getX()][position.getY() - 1].g = mind[position.getX()][position.getY()].g + 1;
+                    mind[position.getX()][position.getY() - 1].parentX = position.getX();
+                    mind[position.getX()][position.getY() - 1].parentY = position.getY();
+                }
             }
         }
         if ((position.getX() < 8) && (position.getY() > 0)) {
-            if ((mind[position.getX() + 1][position.getY() - 1].typeOfCell!=memInsides.inspected)&&(closed.contains(new Coordinates(position.getX()+1,position.getY()-1)))) {
-                open.add(mind[position.getX()+1][position.getY()-1]);
+            if (open.contains(mind[position.getX()+1][position.getY()-1])){
+                if (mind[position.x][position.y].g+1<mind[position.getX()+1][position.getY()-1].g) {
+                    mind[position.getX() + 1][position.getY() - 1].g = mind[position.x][position.y].g + 1;
+                    mind[position.getX() + 1][position.getY() - 1].parentX = position.getX();
+                    mind[position.getX() + 1][position.getY() - 1].parentY = position.getY();
+                }
+            } else {
+                if ((mind[position.getX() + 1][position.getY() - 1].typeOfCell != memInsides.inspected) && (!closed.contains(new Coordinates(position.getX() + 1, position.getY() - 1)))) {
+                    open.add(mind[position.getX() + 1][position.getY() - 1]);
+                    mind[position.getX() + 1][position.getY() - 1].g = mind[position.getX()][position.getY()].g + 1;
+                    mind[position.getX() + 1][position.getY() - 1].parentX = position.getX();
+                    mind[position.getX() + 1][position.getY() - 1].parentY = position.getY();
+                }
             }
+        }
+    }
+    void BFS(){
+        vision.firstSee(game,mind,position);
+        addCells();
+        while(!open.isEmpty()){
+            position.x=open.peek().x;
+            position.y=open.poll().y;
+            closed.add(new Coordinates(position.getX(), position.getY()));
+            take();
+            vision.seeCells(game,mind,position);
+            addCells();
+        }
+    }
+    void take(){
+        ArrayList<String> insides= game.space[position.getX()][position.getY()].elements;
+        ArrayList<String> buffer= new ArrayList<>();
+        while(!insides.isEmpty()){
+            if (insides.get(0)=="B"){
+                book=new Coordinates(position.getX(), position.getY());
+            }
+            if (insides.get(0)=="C"){
+
+                cloak= new Coordinates(position.getX(), position.getY());
+            }
+            if (insides.get(0)=="E"){
+                reachable=true;
+            }
+            buffer.add(insides.get(0));
+            insides.remove(0);
+        }
+        game.space[position.getX()][position.getY()].elements=buffer;
+    }
+    ArrayList<Coordinates> getPath(Coordinates start,Coordinates end){
+        refreshMind();
+        setHeuristic(end);
+        open.clear();
+        closed.clear();
+        position.x=start.getX();
+        position.y=start.getY();
+        Coordinates previous=new Coordinates();
+        open.add(mind[position.getX()][position.getY()]);
+        while (true){
+            previous.x= position.x;
+            previous.y= position.y;
+            position.x=open.peek().x;
+            position.y=open.poll().y;
+            closed.add(new Coordinates(position.getX(), position.getY()));
+            if (position.getX()== end.x&&position.getY()== end.y){
+                break;
+            }
+            addCells();
+        }
+        ArrayList<Coordinates> path= new ArrayList<>();
+        while (true){
+            path.add(new Coordinates(position.x, position.y));
+            previous.x= position.x;
+            previous.y= position.y;
+            position.x=mind[previous.x][previous.y].parentX;
+            position.y=mind[previous.x][previous.y].parentY;
+            if (position.x==start.x&&position.y==start.y){
+                break;
+            }
+        }
+        path.add(new Coordinates(position.x, position.y));
+        return path;
+    }
+    void algorithm(){
+        open.clear();
+        closed.clear();
+        if (book!=null&&reachable){
+            ArrayList<Coordinates> path;
+            path = getPath(game.Harry,book);
+            printPath(path);
+            System.out.println("hui");
+            path = getPath(book,game.Exit);
+            printPath(path);
+        }
+    }
+    void printPath(ArrayList<Coordinates> path){
+        for (int i=0;i<path.size();i++){
+            System.out.print("["+path.get(i).getX()+","+path.get(i).getY()+"]");
         }
     }
     void setHeuristic(Coordinates goal){
         for (int i=0;i<9;i++){
             for (int j=0; j<9;j++){
                 mind[i][j].h=Math.max(Math.abs(i- goal.getX()),Math.abs(j- goal.getY()));
+            }
+        }
+    }
+    void refreshMind(){
+        for (int i=0;i<9;i++){
+            for (int j=0;j<9;j++){
+                mind[i][j].parentY=-1;
+                mind[i][j].parentX=-1;
+                mind[i][j].g=99;
             }
         }
     }
