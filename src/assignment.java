@@ -704,10 +704,10 @@ class Vision{
     }
 }
 class StarCell extends MemoryCell implements Comparable<StarCell>{
-    int g,h,f;
+    double g,h,f;
     int x,y;
     int parentX,parentY;
-    StarCell(int g,int h){
+    StarCell(double g,double h){
         this.g=g;
         this.h=h;
         typeOfCell=memInsides.unknown;
@@ -724,10 +724,6 @@ class StarCell extends MemoryCell implements Comparable<StarCell>{
     }
     void printG(){
         System.out.print(g);
-    }
-    int getF(){
-        f=g+h;
-        return g+h;
     }
 
     @Override
@@ -987,20 +983,27 @@ class AStar{
             ArrayList<Coordinates> path;
             path = getPath(game.Harry,book);
             printPath(path);
+            govno();
             System.out.println("hui");
             path = getPath(book,game.Exit);
             printPath(path);
         }
     }
     void printPath(ArrayList<Coordinates> path){
+        Stack<String> ans=new Stack<>();
         for (int i=0;i<path.size();i++){
-            System.out.print("["+path.get(i).getX()+","+path.get(i).getY()+"]");
+            ans.add("["+path.get(i).getX()+","+path.get(i).getY()+"]");
+        }
+        System.out.println(ans.size());
+        while (!ans.isEmpty()){
+            System.out.print(ans.pop());
         }
     }
     void setHeuristic(Coordinates goal){
         for (int i=0;i<9;i++){
             for (int j=0; j<9;j++){
                 mind[i][j].h=Math.max(Math.abs(i- goal.getX()),Math.abs(j- goal.getY()));
+                //mind[i][j].h=Math.sqrt(Math.pow((i-goal.getX()),2)+Math.pow((j-goal.getY()),2));
             }
         }
     }
@@ -1011,6 +1014,26 @@ class AStar{
                 mind[i][j].parentX=-1;
                 mind[i][j].g=99;
             }
+        }
+    }
+    void govno (){
+        System.out.println();
+        for (int i=8;i>=0;i--){
+            for (int j=0; j<9;j++){
+                switch (mind[j][i].typeOfCell){
+                    case inspected:
+                        System.out.print("*");
+                        break;
+                    case safe:
+                        System.out.print("-");
+                        break;
+                    case unknown:
+                        System.out.print("?");
+                        break;
+                }
+                System.out.print(" ");
+            }
+            System.out.println();
         }
     }
     void printHeuristic(){
