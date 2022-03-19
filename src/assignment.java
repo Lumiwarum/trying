@@ -38,18 +38,16 @@ class Coordinates{
 }
 public class assignment {
     public static void main(String[] args) {
-        //igra.setGame(new Coordinates(0,0),new Coordinates(4,2),new Coordinates(2,7),new Coordinates(7,4),new Coordinates(0,8),new Coordinates(1,4));
-        int i=1000;
         Game igra= new Game();
+        igra.setGame(new Coordinates(0,0),new Coordinates(1,5),new Coordinates(3,1),new Coordinates(4,6),new Coordinates(0,1),new Coordinates(4,3));
+        int i=100;
+        igra.printGame();
         ArrayList<Coordinates> answer;
-        while (i>0){
-            igra.randomGenerateGame();
-            //igra.printGame();
-            //System.out.println();
-            AStar star=new AStar(1,igra);
-            answer=star.algorithm();
-            i--;
-        }
+        BackTracking backTracking= new BackTracking(igra,1);
+        igra.prepareMap();
+        AStar aStar= new AStar(2,igra);
+        answer=aStar.algorithm();
+        aStar.printPath(answer);
 
 
    }
@@ -394,6 +392,9 @@ class BackTracking{
             Coordinates moveNext = getNewCell();
             visited.add(new Coordinates(moveNext.getX(), moveNext.getY()));
             if (moveNext.getX()==-1&&moveNext.getY()==-1){
+                if (trace.size()==0){
+                    break;
+                }
                 position.x=trace.peek().getX();
                 position.y=trace.pop().getY();
                 for (int i=0;i<visited.size()-1;i++){
@@ -444,11 +445,16 @@ class BackTracking{
                     System.out.print("H ");
                     continue;
                 }
-                if (mind[j][i].unvisited){
-                    System.out.print("- ");
+                if (mind[j][i].typeOfCell==memInsides.safe){
+                    System.out.print("-");
                 } else {
-                    System.out.print("* ");
+                    if (mind[j][i].typeOfCell==memInsides.cloakParseable){
+                        System.out.print("~");
+                    } else {
+                        System.out.print("*");
+                    }
                 }
+                System.out.print(" ");
             }
             System.out.println();
         }
@@ -524,9 +530,38 @@ class BackTracking{
                 }
             }
         } else {
-            System.out.println("no way");
+            if (hasCloak){
+                vision.checkAllCloakSafe(mind);
+                position.x=game.Cloak.getX();
+                position.y=game.Cloak.getY();
+                for (int i=0;i<9;i++){
+                    for (int j=0; j<9;j++){
+                        mind[i][j].unvisited=true;
+                    }
+                }
+                mind[position.getX()][position.getY()].unvisited=false;
+                if (move(getNewCell())){
+                    Stack<Coordinates> answer=new Stack<>();
+                    trace.add(position);
+                    while (!trace.isEmpty()){
+                        answer.add(trace.pop());
+                    }
+                    while (!traceBook.isEmpty()){
+                        answer.add(traceBook.pop());
+                    }
+                    while (!traceCloak.isEmpty()){
+                        answer.add(traceCloak.pop());
+                    }
+                    while (!answer.isEmpty()){
+                        System.out.print("["+answer.peek().getX()+","+answer.pop().getY()+"]");
+                    }
+                } else {
+                    System.out.println("no way");
+                }
+            } else {
+                System.out.println("no way");
+            }
         }
-
     }
 }
 class Vision{
@@ -546,6 +581,7 @@ class Vision{
                     }
                 } else {
                     mind[position.getX() + 1][position.getY()].typeOfCell = memInsides.safe;
+                    checkCloakSafe(mind,new Coordinates(position.getX() +1,position.getY()));
                 }
             }
 
@@ -558,6 +594,7 @@ class Vision{
                     }
                 } else {
                     mind[position.getX() + 1][position.getY() + 1].typeOfCell = memInsides.safe;
+                    checkCloakSafe(mind,new Coordinates(position.getX() +1,position.getY()+1));
                 }
             }
 
@@ -570,6 +607,7 @@ class Vision{
                     }
                 } else {
                     mind[position.getX()][position.getY() + 1].typeOfCell = memInsides.safe;
+                    checkCloakSafe(mind,new Coordinates(position.getX(),position.getY()));
                 }
             }
 
@@ -582,6 +620,7 @@ class Vision{
                     }
                 } else {
                     mind[position.getX() - 1][position.getY() + 1].typeOfCell = memInsides.safe;
+                    checkCloakSafe(mind,new Coordinates(position.getX() -1,position.getY()+1));
                 }
             }
 
@@ -594,6 +633,7 @@ class Vision{
                     }
                 } else {
                     mind[position.getX() - 1][position.getY()].typeOfCell = memInsides.safe;
+                    checkCloakSafe(mind,new Coordinates(position.getX() -1,position.getY()));
                 }
             }
 
@@ -606,6 +646,7 @@ class Vision{
                     }
                 } else {
                     mind[position.getX() - 1][position.getY() - 1].typeOfCell = memInsides.safe;
+                    checkCloakSafe(mind,new Coordinates(position.getX() -1,position.getY()-1));
                 }
             }
 
@@ -618,6 +659,7 @@ class Vision{
                     }
                 } else {
                     mind[position.getX()][position.getY() - 1].typeOfCell = memInsides.safe;
+                    checkCloakSafe(mind,new Coordinates(position.getX(),position.getY()-1));
                 }
             }
 
@@ -630,6 +672,7 @@ class Vision{
                     }
                 } else {
                     mind[position.getX() + 1][position.getY() - 1].typeOfCell = memInsides.safe;
+                    checkCloakSafe(mind,new Coordinates(position.getX() +1,position.getY()+1));
                 }
             }
         }
@@ -639,6 +682,7 @@ class Vision{
                     mind[position.getX() + 2][position.getY()].typeOfCell = memInsides.inspected;
                 } else {
                     mind[position.getX() + 2][position.getY()].typeOfCell = memInsides.safe;
+                    checkCloakSafe(mind,new Coordinates(position.getX() +2,position.getY()));
                 }
             }
             if ((position.getX() < 7) && (position.getY() < 8)) {
@@ -646,6 +690,7 @@ class Vision{
                     mind[position.getX() + 2][position.getY() + 1].typeOfCell = memInsides.inspected;
                 } else {
                     mind[position.getX() + 2][position.getY() + 1].typeOfCell = memInsides.safe;
+                    checkCloakSafe(mind,new Coordinates(position.getX() +2,position.getY()+1));
                 }
             }
             if ((position.getX() < 8) && (position.getY() < 7)) {
@@ -653,6 +698,7 @@ class Vision{
                     mind[position.getX() + 1][position.getY() + 2].typeOfCell = memInsides.inspected;
                 } else {
                     mind[position.getX() + 1][position.getY() + 2].typeOfCell = memInsides.safe;
+                    checkCloakSafe(mind,new Coordinates(position.getX() +1,position.getY()+2));
                 }
             }
             if (position.getY() < 7) {
@@ -660,6 +706,7 @@ class Vision{
                     mind[position.getX()][position.getY() + 2].typeOfCell = memInsides.inspected;
                 } else {
                     mind[position.getX()][position.getY() + 2].typeOfCell = memInsides.safe;
+                    checkCloakSafe(mind,new Coordinates(position.getX() ,position.getY()+2));
                 }
             }
             if ((position.getX() > 0) && (position.getY() < 7)) {
@@ -667,6 +714,7 @@ class Vision{
                     mind[position.getX() - 1][position.getY() + 2].typeOfCell = memInsides.inspected;
                 } else {
                     mind[position.getX() - 1][position.getY() + 2].typeOfCell = memInsides.safe;
+                    checkCloakSafe(mind,new Coordinates(position.getX() -1,position.getY()+2));
                 }
             }
             if ((position.getX() > 1) && (position.getY() < 8)) {
@@ -674,6 +722,7 @@ class Vision{
                     mind[position.getX() - 2][position.getY() + 1].typeOfCell = memInsides.inspected;
                 } else {
                     mind[position.getX() - 2][position.getY() + 1].typeOfCell = memInsides.safe;
+                    checkCloakSafe(mind,new Coordinates(position.getX() -2,position.getY()+1));
                 }
             }
             if (position.getX() > 1) {
@@ -681,6 +730,7 @@ class Vision{
                     mind[position.getX() - 2][position.getY()].typeOfCell = memInsides.inspected;
                 } else {
                     mind[position.getX() - 2][position.getY()].typeOfCell = memInsides.safe;
+                    checkCloakSafe(mind,new Coordinates(position.getX() -2,position.getY()));
                 }
             }
             if ((position.getX() > 1) && (position.getY() > 0)) {
@@ -688,6 +738,7 @@ class Vision{
                     mind[position.getX() - 2][position.getY() - 1].typeOfCell = memInsides.inspected;
                 } else {
                     mind[position.getX() - 2][position.getY() - 1].typeOfCell = memInsides.safe;
+                    checkCloakSafe(mind,new Coordinates(position.getX() -2,position.getY()-1));
                 }
             }
             if ((position.getX() > 0) && (position.getY() > 1)) {
@@ -695,6 +746,7 @@ class Vision{
                     mind[position.getX() - 1][position.getY() - 2].typeOfCell = memInsides.inspected;
                 } else {
                     mind[position.getX() - 1][position.getY() - 2].typeOfCell = memInsides.safe;
+                    checkCloakSafe(mind,new Coordinates(position.getX() -1,position.getY()-2));
                 }
             }
             if (position.getY() > 1) {
@@ -702,6 +754,7 @@ class Vision{
                     mind[position.getX()][position.getY() - 2].typeOfCell = memInsides.inspected;
                 } else {
                     mind[position.getX()][position.getY() - 2].typeOfCell = memInsides.safe;
+                    checkCloakSafe(mind,new Coordinates(position.getX() ,position.getY()-2));
                 }
             }
             if ((position.getX() < 8) && (position.getY() > 1)) {
@@ -709,6 +762,7 @@ class Vision{
                     mind[position.getX() + 1][position.getY() - 2].typeOfCell = memInsides.inspected;
                 } else {
                     mind[position.getX() + 1][position.getY() - 2].typeOfCell = memInsides.safe;
+                    checkCloakSafe(mind,new Coordinates(position.getX() +1,position.getY()-2));
                 }
             }
             if ((position.getX() < 7) && (position.getY() > 0)) {
@@ -716,9 +770,9 @@ class Vision{
                     mind[position.getX() + 2][position.getY() - 1].typeOfCell = memInsides.inspected;
                 } else {
                     mind[position.getX() + 2][position.getY() - 1].typeOfCell = memInsides.safe;
+                    checkCloakSafe(mind,new Coordinates(position.getX() +2,position.getY()-1));
                 }
             }
-            checkCloakSafe(mind,position);
         }
     }
     void firstSee(Game game,MemoryCell[][] mind,Coordinates position){
@@ -767,6 +821,7 @@ class Vision{
                     mind[position.getX() + 1][position.getY() - 1].typeOfCell = memInsides.safe;
                 }
             }
+            checkCloakSafe(mind,position);
         }
     }
     void checkCloakSafe(MemoryCell[][] mind,Coordinates position){
@@ -774,8 +829,6 @@ class Vision{
             if (mind[position.getX()+1][position.getY()].typeOfCell==memInsides.inspected) {
                 if (mind[position.getX()][position.getY()].typeOfCell == memInsides.safe) {
                     mind[position.getX() + 1][position.getY()].typeOfCell = memInsides.cloakParseable;
-                } else {
-                    mind[position.getX() + 1][position.getY()].typeOfCell = memInsides.inspected;
                 }
             }
         }
@@ -784,8 +837,6 @@ class Vision{
             if (mind[position.getX() + 1][position.getY() + 1].typeOfCell == memInsides.inspected) {
                 if (mind[position.getX()][position.getY()].typeOfCell == memInsides.safe) {
                     mind[position.getX() + 1][position.getY() + 1].typeOfCell = memInsides.cloakParseable;
-                } else {
-                    mind[position.getX() + 1][position.getY() + 1].typeOfCell = memInsides.inspected;
                 }
             }
         }
@@ -794,8 +845,6 @@ class Vision{
             if (mind[position.getX()][position.getY() + 1].typeOfCell == memInsides.inspected) {
                 if (mind[position.getX()][position.getY()].typeOfCell==memInsides.safe) {
                     mind[position.getX()][position.getY() + 1].typeOfCell = memInsides.cloakParseable;
-                } else {
-                    mind[position.getX()][position.getY() + 1].typeOfCell = memInsides.inspected;
                 }
             }
         }
@@ -804,8 +853,6 @@ class Vision{
             if (mind[position.getX() - 1][position.getY()+1].typeOfCell == memInsides.inspected) {
                 if (mind[position.getX()][position.getY()].typeOfCell==memInsides.safe) {
                     mind[position.getX() - 1][position.getY() + 1].typeOfCell = memInsides.cloakParseable;
-                } else {
-                    mind[position.getX() - 1][position.getY() + 1].typeOfCell = memInsides.inspected;
                 }
             }
         }
@@ -814,8 +861,6 @@ class Vision{
             if (mind[position.getX() - 1][position.getY()].typeOfCell == memInsides.inspected) {
                 if (mind[position.getX()][position.getY()].typeOfCell==memInsides.safe) {
                     mind[position.getX() - 1][position.getY()].typeOfCell = memInsides.cloakParseable;
-                } else {
-                    mind[position.getX() - 1][position.getY()].typeOfCell = memInsides.inspected;
                 }
             }
         }
@@ -824,8 +869,6 @@ class Vision{
             if (mind[position.getX() - 1][position.getY() - 1].typeOfCell == memInsides.inspected) {
                 if (mind[position.getX()][position.getY()].typeOfCell == memInsides.safe) {
                     mind[position.getX() - 1][position.getY() - 1].typeOfCell = memInsides.cloakParseable;
-                } else {
-                    mind[position.getX() - 1][position.getY() - 1].typeOfCell = memInsides.inspected;
                 }
             }
         }
@@ -834,8 +877,6 @@ class Vision{
             if (mind[position.getX()][position.getY() - 1].typeOfCell == memInsides.inspected) {
                 if (mind[position.getX()][position.getY()].typeOfCell==memInsides.safe) {
                     mind[position.getX()][position.getY() - 1].typeOfCell = memInsides.cloakParseable;
-                } else {
-                    mind[position.getX()][position.getY() - 1].typeOfCell = memInsides.inspected;
                 }
             }
         }
@@ -844,9 +885,17 @@ class Vision{
             if (mind[position.getX() + 1][position.getY() - 1].typeOfCell == memInsides.inspected) {
                 if (mind[position.getX()][position.getY()].typeOfCell==memInsides.safe) {
                     mind[position.getX() + 1][position.getY() - 1].typeOfCell = memInsides.cloakParseable;
-                } else {
-                    mind[position.getX() + 1][position.getY() - 1].typeOfCell = memInsides.inspected;
                 }
+            }
+        }
+    }
+    void checkAllCloakSafe(MemoryCell[][] mind){
+        for (int i=0;i<9;i++){
+            for (int j=0;j<9;j++){
+                if (mind[i][j].typeOfCell!=memInsides.safe){
+                    continue;
+                }
+                checkCloakSafe(mind,new Coordinates(i,j));
             }
         }
     }
@@ -931,6 +980,8 @@ class AStar{
             }
         }
         BFS();
+        vision.checkAllCloakSafe(mind);
+
     }
     void addCells(){
         if (position.getX() < 8) {
@@ -1086,17 +1137,117 @@ class AStar{
             }
         }
     }
-    void BFS(){
+    void addCellsBFS(){
+        addCells();
+        if (cloak!=null) {
+            if (position.getX() < 8) {
+                if (!open.contains(mind[position.getX() + 1][position.getY()])) {
+                    if ((mind[position.getX() + 1][position.getY()].typeOfCell == memInsides.cloakParseable) && (!closed.contains(new Coordinates(position.getX() + 1, position.getY())))) {
+                        open.add(mind[position.getX() + 1][position.getY()]);
+                    }
+                }
+            }
+
+            if ((position.getX() < 8) && (position.getY() < 8)) {
+                if (!open.contains(mind[position.getX() + 1][position.getY() + 1])) {
+                    if ((mind[position.getX() + 1][position.getY() + 1].typeOfCell == memInsides.cloakParseable) && (!closed.contains(new Coordinates(position.getX() + 1, position.getY() + 1)))) {
+                        open.add(mind[position.getX() + 1][position.getY() + 1]);
+                    }
+                }
+            }
+
+            if (position.getY() < 8) {
+                if (!open.contains(mind[position.getX()][position.getY() + 1])) {
+                    if ((mind[position.getX()][position.getY() + 1].typeOfCell == memInsides.cloakParseable) && (!closed.contains(new Coordinates(position.getX(), position.getY() + 1)))) {
+                        open.add(mind[position.getX()][position.getY() + 1]);
+                    }
+                }
+            }
+
+            if ((position.getX() > 0) && (position.getY() < 8)) {
+                if (!open.contains(mind[position.getX() - 1][position.getY() + 1])) {
+                    if ((mind[position.getX() - 1][position.getY() + 1].typeOfCell == memInsides.cloakParseable) && (!closed.contains(new Coordinates(position.getX() - 1, position.getY() + 1)))) {
+                        open.add(mind[position.getX() - 1][position.getY() + 1]);
+                    }
+                }
+            }
+
+            if (position.getX() > 0) {
+                if (!open.contains(mind[position.getX() - 1][position.getY()])) {
+                    if ((mind[position.getX() - 1][position.getY()].typeOfCell == memInsides.cloakParseable) && (!closed.contains(new Coordinates(position.getX() - 1, position.getY())))) {
+                        open.add(mind[position.getX() - 1][position.getY()]);
+                    }
+                }
+            }
+
+            if ((position.getX() > 0) && (position.getY() > 0)) {
+                if (!open.contains(mind[position.getX() - 1][position.getY() - 1])) {
+                    if ((mind[position.getX() - 1][position.getY() - 1].typeOfCell == memInsides.cloakParseable) && (!closed.contains(new Coordinates(position.getX() - 1, position.getY() - 1)))) {
+                        open.add(mind[position.getX() - 1][position.getY() - 1]);
+                    }
+                }
+            }
+
+            if (position.getY() > 0) {
+                if (!open.contains(mind[position.getX()][position.getY() - 1])) {
+                    if ((mind[position.getX()][position.getY() - 1].typeOfCell == memInsides.cloakParseable) && (!closed.contains(new Coordinates(position.getX(), position.getY() - 1)))) {
+                        open.add(mind[position.getX()][position.getY() - 1]);
+                    }
+                }
+            }
+
+            if ((position.getX() < 8) && (position.getY() > 0)) {
+                if (!open.contains(mind[position.getX() + 1][position.getY() - 1])) {
+                    if ((mind[position.getX() + 1][position.getY() - 1].typeOfCell == memInsides.cloakParseable) && (!closed.contains(new Coordinates(position.getX() + 1, position.getY() - 1)))) {
+                        open.add(mind[position.getX() + 1][position.getY() - 1]);
+                    }
+                }
+            }
+        }
+    }
+    boolean BFSCloack(){
+        closed.clear();
+        open.clear();
+        vision.firstSee(game,mind,position);
+        addCellsBFS();
+        while(!open.isEmpty()){
+            position.x=open.peek().x;
+            position.y=open.poll().y;
+            if (cloak==null&&(mind[position.x][position.y].typeOfCell==memInsides.inspected||mind[position.x][position.y].typeOfCell==memInsides.cloakParseable))
+            {
+                return false;
+            }
+            if ((game.Filch.getX()== position.getX()&&game.Filch.getY()== position.getY())||(game.Norris.getX()== position.getX()&&game.Norris.getY()== position.getY())){
+                return false;
+            }
+            closed.add(new Coordinates(position.getX(), position.getY()));
+            take();
+            vision.seeCells(game,mind,position);
+            addCellsBFS();
+        }
+        return true;
+    }
+    boolean BFS(){
+        closed.clear();
+        open.clear();
         vision.firstSee(game,mind,position);
         addCells();
         while(!open.isEmpty()){
             position.x=open.peek().x;
             position.y=open.poll().y;
+            if (cloak==null&&(mind[position.x][position.y].typeOfCell==memInsides.inspected||mind[position.x][position.y].typeOfCell==memInsides.cloakParseable))
+            {
+                return false;
+            }
+            if ((game.Filch.getX()== position.getX()&&game.Filch.getY()== position.getY())||(game.Norris.getX()== position.getX()&&game.Norris.getY()== position.getY())){
+                return false;
+            }
             closed.add(new Coordinates(position.getX(), position.getY()));
             take();
             vision.seeCells(game,mind,position);
             addCells();
         }
+        return true;
     }
     void take(){
         ArrayList<String> insides= game.space[position.getX()][position.getY()].elements;
@@ -1213,6 +1364,7 @@ class AStar{
         } else {
             if (cloak!= null){
                 ArrayList<Coordinates> cloakParsable = new ArrayList<>();
+                vision.checkAllCloakSafe(mind);
                 for (int i=0;i<9;i++){
                     for (int j=0;j<9;j++){
                         if (mind[i][j].typeOfCell==memInsides.cloakParseable){
@@ -1221,12 +1373,14 @@ class AStar{
                         }
                     }
                 }
-                BFS();
+                BFSCloack();
                 while (!cloakParsable.isEmpty()){
                     mind[cloakParsable.get(0).getX()][cloakParsable.get(0).getY()].typeOfCell=memInsides.cloakParseable;
                     cloakParsable.remove(0);
                 }
+                vision.checkAllCloakSafe(mind);
             }
+            // TODO: complete this pathfind
             if (book!=null&&reachable){
                 path2 = getPath(game.Harry,cloak);
                 path2.remove(0);
