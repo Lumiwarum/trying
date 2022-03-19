@@ -1170,18 +1170,17 @@ class AStar{
         }
         return ans;
     }
-    void algorithm(){
+    ArrayList<Coordinates> algorithm(){
         open.clear();
         closed.clear();
+        ArrayList<Coordinates> path,path2,path3,buffer;
         if (book!=null&&reachable){
-            ArrayList<Coordinates> path,path2,path3,buffer;
             path = getPath(game.Harry,book);
             path.remove(0);
             buffer= getPath(book,game.Exit);
             buffer.addAll(path);
             path.clear();
             path.addAll(buffer);
-            printPath(path);
             if (cloak!=null){
                 path2 = getPath(game.Harry,cloak);
                 path2.remove(0);
@@ -1190,19 +1189,54 @@ class AStar{
                 buffer.remove(0);
                 path2 = getCloakPath(book,game.Exit);
                 path2.addAll(buffer);
-                printPath(path2);
 
                 path3 = getPath(game.Harry,book);
-                printPath(path3);
                 path3.remove(0);
                 buffer = getPath(book,cloak);
                 buffer.addAll(path3);
                 buffer.remove(0);
                 path3 = getCloakPath(cloak,game.Exit);
                 path3.addAll(buffer);
-                printPath(path3);
+                if (path2.size()<=path.size()){
+                    path = path2;
+                }
+                if (path3.size()<=path.size())
+                {
+                    path=path3;
+                }
+            }
+        } else {
+            if (cloak!= null){
+                ArrayList<Coordinates> cloakParsable = new ArrayList<>();
+                for (int i=0;i<9;i++){
+                    for (int j=0;j<9;j++){
+                        if (mind[i][j].typeOfCell==memInsides.cloakParseable){
+                            cloakParsable.add(new Coordinates(i,j));
+                            mind[i][j].typeOfCell=memInsides.safe;
+                        }
+                    }
+                }
+                BFS();
+                while (!cloakParsable.isEmpty()){
+                    mind[cloakParsable.get(0).getX()][cloakParsable.get(0).getY()].typeOfCell=memInsides.cloakParseable;
+                    cloakParsable.remove(0);
+                }
+            }
+            if (book!=null&&reachable){
+                path2 = getPath(game.Harry,cloak);
+                path2.remove(0);
+                buffer = getCloakPath(cloak,book);
+                buffer.addAll(path2);
+                buffer.remove(0);
+                path2 = getCloakPath(book,game.Exit);
+                path2.addAll(buffer);
+                path=path2;
+            } else {
+                path = new ArrayList<>();
+                path.add(new Coordinates(-1,-1));
             }
         }
+        return path;
     }
     void printPath(ArrayList<Coordinates> path){
         Stack<String> ans=new Stack<>();
