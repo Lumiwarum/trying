@@ -38,14 +38,19 @@ class Coordinates{
 }
 public class assignment {
     public static void main(String[] args) {
-
+        //igra.setGame(new Coordinates(0,0),new Coordinates(4,2),new Coordinates(2,7),new Coordinates(7,4),new Coordinates(0,8),new Coordinates(1,4));
+        int i=1000;
         Game igra= new Game();
-        igra.setGame(new Coordinates(0,0),new Coordinates(4,2),new Coordinates(2,7),new Coordinates(7,4),new Coordinates(0,8),new Coordinates(1,4));
-        igra.printGame();
-        //igra.randomGenerateGame();
-        //BackTracking alg = new BackTracking(igra,1);
-        AStar star=new AStar(1,igra);
-        star.algorithm();
+        ArrayList<Coordinates> answer;
+        while (i>0){
+            igra.randomGenerateGame();
+            //igra.printGame();
+            //System.out.println();
+            AStar star=new AStar(1,igra);
+            answer=star.algorithm();
+            i--;
+        }
+
 
    }
 }
@@ -1144,11 +1149,11 @@ class AStar{
             path.add(new Coordinates(position.x, position.y));
             previous.x= position.x;
             previous.y= position.y;
-            position.x=mind[previous.x][previous.y].parentX;
-            position.y=mind[previous.x][previous.y].parentY;
             if (position.x==start.x&&position.y==start.y){
                 break;
             }
+            position.x=mind[previous.x][previous.y].parentX;
+            position.y=mind[previous.x][previous.y].parentY;
         }
         path.add(new Coordinates(position.x, position.y));
         return path;
