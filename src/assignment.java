@@ -40,18 +40,12 @@ public class assignment {
     public static void main(String[] args) {
 
         Game igra= new Game();
-        igra.setGame(new Coordinates(0,0),new Coordinates(4,0),new Coordinates(7,4),new Coordinates(1,0),new Coordinates(0,8),new Coordinates(7,2));
+        igra.setGame(new Coordinates(0,0),new Coordinates(4,2),new Coordinates(2,7),new Coordinates(7,4),new Coordinates(0,8),new Coordinates(1,4));
         igra.printGame();
         //igra.randomGenerateGame();
-        BackTracking alg = new BackTracking(igra,1);
-        //AStar star=new AStar(2,igra);
-        //System.out.println(star.book.getX()+" "+star.book.getY());
-        //long t1=System.currentTimeMillis();
-        //star.algorithm();
-        //System.out.println("hui");
-        //System.out.println(System.currentTimeMillis()-t1 + "ms");
-        //star.printHeuristic();
-        //star.printMovements();
+        //BackTracking alg = new BackTracking(igra,1);
+        AStar star=new AStar(1,igra);
+        star.algorithm();
 
    }
 }
@@ -719,7 +713,7 @@ class Vision{
                     mind[position.getX() + 2][position.getY() - 1].typeOfCell = memInsides.safe;
                 }
             }
-            checkCloackSafe(mind,position);
+            checkCloakSafe(mind,position);
         }
     }
     void firstSee(Game game,MemoryCell[][] mind,Coordinates position){
@@ -770,8 +764,7 @@ class Vision{
             }
         }
     }
-    void checkCloackSafe(MemoryCell[][] mind,Coordinates position){
-
+    void checkCloakSafe(MemoryCell[][] mind,Coordinates position){
         if (position.getX() < 8) {
             if (mind[position.getX()+1][position.getY()].typeOfCell==memInsides.inspected) {
                 if (mind[position.getX()][position.getY()].typeOfCell == memInsides.safe) {
@@ -888,10 +881,10 @@ class StarCell extends MemoryCell implements Comparable<StarCell>{
     @Override
     public int compareTo(StarCell o) {
         if (this.typeOfCell==memInsides.safe&&o.typeOfCell==memInsides.unknown){
-            return 1;
+            return -1;
         }
         if (this.typeOfCell==memInsides.unknown&&o.typeOfCell==memInsides.safe){
-            return -1;
+            return 1;
         }
         if (this.f>o.f){
             return 1;
@@ -938,12 +931,14 @@ class AStar{
         if (position.getX() < 8) {
             if (open.contains(mind[position.getX()+1][position.getY()])){
                 if ((mind[position.x][position.y].g+1<mind[position.getX()+1][position.getY()].g)) {
+                    open.remove(mind[position.getX()+1][position.getY()]);
                     mind[position.getX() + 1][position.getY()].setG(mind[position.x][position.y].g + 1);
                     mind[position.getX() + 1][position.getY()].parentX = position.getX();
                     mind[position.getX() + 1][position.getY()].parentY = position.getY();
+                    open.add(mind[position.getX()+1][position.getY()]);
                 }
             } else {
-                if ((mind[position.getX() + 1][position.getY()].typeOfCell != memInsides.inspected) && (!closed.contains(new Coordinates(position.getX() + 1, position.getY())))) {
+                if ((mind[position.getX() + 1][position.getY()].typeOfCell != memInsides.inspected)&&(mind[position.getX() + 1][position.getY()].typeOfCell != memInsides.cloakParseable) && (!closed.contains(new Coordinates(position.getX() + 1, position.getY())))) {
                     open.add(mind[position.getX() + 1][position.getY()]);
                     mind[position.getX() + 1][position.getY()].setG(mind[position.getX()][position.getY()].g + 1);
                     mind[position.getX() + 1][position.getY()].parentX = position.getX();
@@ -951,16 +946,19 @@ class AStar{
                 }
             }
         }
+
         if ((position.getX() < 8) && (position.getY() < 8)) {
             if (open.contains(mind[position.getX()+1][position.getY()+1])){
                 if ((mind[position.x][position.y].g+1<mind[position.getX()+1][position.getY()+1].g)) {
+                    open.remove(mind[position.getX()+1][position.getY()+1]);
                     mind[position.getX() + 1][position.getY() + 1].setG(mind[position.getX()][position.getY()].g + 1);
                     mind[position.getX() + 1][position.getY() + 1].parentX = position.getX();
                     mind[position.getX() + 1][position.getY() + 1].parentY = position.getY();
+                    open.add(mind[position.getX()+1][position.getY()+1]);
                 }
 
             } else {
-                if ((mind[position.getX() + 1][position.getY() + 1].typeOfCell != memInsides.inspected) && (!closed.contains(new Coordinates(position.getX() + 1, position.getY() + 1)))) {
+                if ((mind[position.getX() + 1][position.getY() + 1].typeOfCell != memInsides.inspected) && (mind[position.getX() + 1][position.getY() + 1].typeOfCell != memInsides.cloakParseable) && (!closed.contains(new Coordinates(position.getX() + 1, position.getY() + 1)))) {
                     open.add(mind[position.getX() + 1][position.getY() + 1]);
                     mind[position.getX() + 1][position.getY() + 1].setG(mind[position.getX()][position.getY()].g + 1);
                     mind[position.getX() + 1][position.getY() + 1].parentX = position.getX();
@@ -968,15 +966,18 @@ class AStar{
                 }
             }
         }
+
         if (position.getY() < 8) {
             if (open.contains(mind[position.getX()][position.getY()+1])){
                 if (mind[position.x][position.y].g+1<mind[position.getX()][position.getY()+1].g) {
+                    open.remove(mind[position.getX()][position.getY()+1]);
                     mind[position.getX()][position.getY() + 1].setG(mind[position.getX()][position.getY()].g + 1);
                     mind[position.getX()][position.getY() + 1].parentX = position.getX();
                     mind[position.getX()][position.getY() + 1].parentY = position.getY();
+                    open.add(mind[position.getX()][position.getY()+1]);
                 }
             } else {
-                if ((mind[position.getX()][position.getY() + 1].typeOfCell != memInsides.inspected) && (!closed.contains(new Coordinates(position.getX(), position.getY() + 1)))) {
+                if ((mind[position.getX()][position.getY() + 1].typeOfCell != memInsides.inspected) && (mind[position.getX()][position.getY() + 1].typeOfCell != memInsides.cloakParseable) && (!closed.contains(new Coordinates(position.getX(), position.getY() + 1)))) {
                     open.add(mind[position.getX()][position.getY() + 1]);
                     mind[position.getX()][position.getY() + 1].setG(mind[position.getX()][position.getY()].g + 1);
                     mind[position.getX()][position.getY() + 1].parentX = position.getX();
@@ -984,15 +985,18 @@ class AStar{
                 }
             }
         }
+
         if ((position.getX() > 0) && (position.getY() < 8)) {
             if (open.contains(mind[position.getX()-1][position.getY()+1])){
                 if (mind[position.x][position.y].g+1<mind[position.getX()-1][position.getY()+1].g) {
+                    open.remove(mind[position.getX()-1][position.getY()+1]);
                     mind[position.getX() - 1][position.getY() + 1].setG(mind[position.getX()][position.getY()].g + 1);
                     mind[position.getX() - 1][position.getY() + 1].parentX = position.getX();
                     mind[position.getX() - 1][position.getY() + 1].parentY = position.getY();
+                    open.add(mind[position.getX()-1][position.getY()+1]);
                 }
             } else {
-                if ((mind[position.getX() - 1][position.getY() + 1].typeOfCell != memInsides.inspected) && (!closed.contains(new Coordinates(position.getX() - 1, position.getY() + 1)))) {
+                if ((mind[position.getX() - 1][position.getY() + 1].typeOfCell != memInsides.inspected) && (mind[position.getX() - 1][position.getY() + 1].typeOfCell != memInsides.cloakParseable) && (!closed.contains(new Coordinates(position.getX() - 1, position.getY() + 1)))) {
                     open.add(mind[position.getX() - 1][position.getY() + 1]);
                     mind[position.getX() - 1][position.getY() + 1].setG(mind[position.getX()][position.getY()].g + 1);
                     mind[position.getX() - 1][position.getY() + 1].parentX = position.getX();
@@ -1000,15 +1004,18 @@ class AStar{
                 }
             }
         }
+
         if (position.getX() > 0) {
             if (open.contains(mind[position.getX()-1][position.getY()])){
                 if (mind[position.x][position.y].g+1<mind[position.getX()-1][position.getY()].g) {
+                    open.remove(mind[position.getX()-1][position.getY()]);
                     mind[position.getX() - 1][position.getY()].setG(mind[position.getX()][position.getY()].g + 1);
                     mind[position.getX() - 1][position.getY()].parentX = position.getX();
                     mind[position.getX() - 1][position.getY()].parentY = position.getY();
+                    open.add(mind[position.getX()-1][position.getY()]);
                 }
             } else {
-                if ((mind[position.getX() - 1][position.getY()].typeOfCell != memInsides.inspected) && (!closed.contains(new Coordinates(position.getX() - 1, position.getY())))) {
+                if ((mind[position.getX() - 1][position.getY()].typeOfCell != memInsides.inspected) && (mind[position.getX() - 1][position.getY()].typeOfCell != memInsides.cloakParseable) && (!closed.contains(new Coordinates(position.getX() - 1, position.getY())))) {
                     open.add(mind[position.getX() - 1][position.getY()]);
                     mind[position.getX() - 1][position.getY()].setG(mind[position.getX()][position.getY()].g + 1);
                     mind[position.getX() - 1][position.getY()].parentX = position.getX();
@@ -1016,15 +1023,18 @@ class AStar{
                 }
             }
         }
+
         if ((position.getX() > 0) && (position.getY() > 0)) {
             if (open.contains(mind[position.getX()-1][position.getY()-1])){
                 if (mind[position.x][position.y].g+1<mind[position.getX()-1][position.getY()-1].g) {
+                    open.remove(mind[position.getX()-1][position.getY()-1]);
                     mind[position.getX() - 1][position.getY() - 1].setG(mind[position.getX()][position.getY()].g + 1);
                     mind[position.getX() - 1][position.getY() - 1].parentX = position.getX();
                     mind[position.getX() - 1][position.getY() - 1].parentY = position.getY();
+                    open.add(mind[position.getX()-1][position.getY()-1]);
                 }
             } else {
-                if ((mind[position.getX() - 1][position.getY() - 1].typeOfCell != memInsides.inspected) && (!closed.contains(new Coordinates(position.getX() - 1, position.getY() - 1)))) {
+                if ((mind[position.getX() - 1][position.getY() - 1].typeOfCell != memInsides.inspected) && (mind[position.getX() - 1][position.getY() - 1].typeOfCell != memInsides.cloakParseable) && (!closed.contains(new Coordinates(position.getX() - 1, position.getY() - 1)))) {
                     open.add(mind[position.getX() - 1][position.getY() - 1]);
                     mind[position.getX() - 1][position.getY() - 1].setG(mind[position.getX()][position.getY()].g + 1);
                     mind[position.getX() - 1][position.getY() - 1].parentX = position.getX();
@@ -1032,15 +1042,18 @@ class AStar{
                 }
             }
         }
+
         if (position.getY() > 0) {
             if (open.contains(mind[position.getX()][position.getY()-1])){
                 if (mind[position.x][position.y].g+1<mind[position.getX()][position.getY()-1].g) {
+                    open.remove(mind[position.getX()][position.getY()-1]);
                     mind[position.getX()][position.getY() - 1].setG(mind[position.getX()][position.getY()].g + 1);
                     mind[position.getX()][position.getY() - 1].parentX = position.getX();
                     mind[position.getX()][position.getY() - 1].parentY = position.getY();
+                    open.add(mind[position.getX()][position.getY()-1]);
                 }
             } else {
-                if ((mind[position.getX()][position.getY() - 1].typeOfCell != memInsides.inspected) && (!closed.contains(new Coordinates(position.getX(), position.getY() - 1)))) {
+                if ((mind[position.getX()][position.getY() - 1].typeOfCell != memInsides.inspected) && (mind[position.getX()][position.getY() - 1].typeOfCell != memInsides.cloakParseable) && (!closed.contains(new Coordinates(position.getX(), position.getY() - 1)))) {
                     open.add(mind[position.getX()][position.getY() - 1]);
                     mind[position.getX()][position.getY() - 1].setG(mind[position.getX()][position.getY()].g + 1);
                     mind[position.getX()][position.getY() - 1].parentX = position.getX();
@@ -1048,15 +1061,18 @@ class AStar{
                 }
             }
         }
+
         if ((position.getX() < 8) && (position.getY() > 0)) {
             if (open.contains(mind[position.getX()+1][position.getY()-1])){
                 if (mind[position.x][position.y].g+1<mind[position.getX()+1][position.getY()-1].g) {
+                    open.remove(mind[position.getX()+1][position.getY()-1]);
                     mind[position.getX() + 1][position.getY() - 1].setG(mind[position.getX()][position.getY()].g + 1);
                     mind[position.getX() + 1][position.getY() - 1].parentX = position.getX();
                     mind[position.getX() + 1][position.getY() - 1].parentY = position.getY();
+                    open.add(mind[position.getX()+1][position.getY()-1]);
                 }
             } else {
-                if ((mind[position.getX() + 1][position.getY() - 1].typeOfCell != memInsides.inspected) && (!closed.contains(new Coordinates(position.getX() + 1, position.getY() - 1)))) {
+                if ((mind[position.getX() + 1][position.getY() - 1].typeOfCell != memInsides.inspected) && (mind[position.getX() + 1][position.getY() - 1].typeOfCell != memInsides.cloakParseable) && (!closed.contains(new Coordinates(position.getX() + 1, position.getY() - 1)))) {
                     open.add(mind[position.getX() + 1][position.getY() - 1]);
                     mind[position.getX() + 1][position.getY() - 1].setG(mind[position.getX()][position.getY()].g + 1);
                     mind[position.getX() + 1][position.getY() - 1].parentX = position.getX();
@@ -1101,14 +1117,17 @@ class AStar{
         setHeuristic(end);
         open.clear();
         closed.clear();
+        boolean impossible=false;
         position.x=start.getX();
         position.y=start.getY();
         Coordinates previous=new Coordinates();
         mind[position.getX()][position.getY()].g=0;
         open.add(mind[position.getX()][position.getY()]);
         while (true){
-            previous.x= position.x;
-            previous.y= position.y;
+            if (open.size()==0){
+                impossible=true;
+                break;
+            }
             position.x=open.peek().x;
             position.y=open.poll().y;
             closed.add(new Coordinates(position.getX(), position.getY()));
@@ -1116,10 +1135,11 @@ class AStar{
                 break;
             }
             addCells();
-            //printMovements();
-            //System.out.println();
         }
         ArrayList<Coordinates> path= new ArrayList<>();
+        if (impossible){
+            path.add(new Coordinates(-1,-1));
+        }
         while (true){
             path.add(new Coordinates(position.x, position.y));
             previous.x= position.x;
@@ -1133,16 +1153,55 @@ class AStar{
         path.add(new Coordinates(position.x, position.y));
         return path;
     }
+    ArrayList<Coordinates> getCloakPath(Coordinates start,Coordinates end){
+        ArrayList<Coordinates> cloakParsable = new ArrayList<>();
+        for (int i=0;i<9;i++){
+            for (int j=0;j<9;j++){
+                if (mind[i][j].typeOfCell==memInsides.cloakParseable){
+                    cloakParsable.add(new Coordinates(i,j));
+                    mind[i][j].typeOfCell=memInsides.safe;
+                }
+            }
+        }
+        ArrayList<Coordinates> ans=getPath(start, end);
+        while (!cloakParsable.isEmpty()){
+            mind[cloakParsable.get(0).getX()][cloakParsable.get(0).getY()].typeOfCell=memInsides.cloakParseable;
+            cloakParsable.remove(0);
+        }
+        return ans;
+    }
     void algorithm(){
         open.clear();
         closed.clear();
         if (book!=null&&reachable){
-            ArrayList<Coordinates> path;
+            ArrayList<Coordinates> path,path2,path3,buffer;
             path = getPath(game.Harry,book);
+            path.remove(0);
+            buffer= getPath(book,game.Exit);
+            buffer.addAll(path);
+            path.clear();
+            path.addAll(buffer);
             printPath(path);
-            System.out.println();
-            path = getPath(book,game.Exit);
-            printPath(path);
+            if (cloak!=null){
+                path2 = getPath(game.Harry,cloak);
+                path2.remove(0);
+                buffer = getCloakPath(cloak,book);
+                buffer.addAll(path2);
+                buffer.remove(0);
+                path2 = getCloakPath(book,game.Exit);
+                path2.addAll(buffer);
+                printPath(path2);
+
+                path3 = getPath(game.Harry,book);
+                printPath(path3);
+                path3.remove(0);
+                buffer = getPath(book,cloak);
+                buffer.addAll(path3);
+                buffer.remove(0);
+                path3 = getCloakPath(cloak,game.Exit);
+                path3.addAll(buffer);
+                printPath(path3);
+            }
         }
     }
     void printPath(ArrayList<Coordinates> path){
@@ -1154,6 +1213,7 @@ class AStar{
         while (!ans.isEmpty()){
             System.out.print(ans.pop());
         }
+        System.out.println();
     }
     void setHeuristic(Coordinates goal){
         for (int i=0;i<9;i++){
@@ -1185,6 +1245,9 @@ class AStar{
                         break;
                     case unknown:
                         System.out.print("?");
+                        break;
+                    case cloakParseable:
+                        System.out.print("~");
                         break;
                 }
                 System.out.print(" ");
