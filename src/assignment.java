@@ -40,7 +40,7 @@ public class assignment {
     public static void main(String[] args) {
 
         Game igra= new Game();
-        igra.setGame(new Coordinates(0,0),new Coordinates(4,0),new Coordinates(7,4),new Coordinates(1,0),new Coordinates(0,0),new Coordinates(7,2));
+        igra.setGame(new Coordinates(0,0),new Coordinates(4,0),new Coordinates(7,4),new Coordinates(1,0),new Coordinates(0,8),new Coordinates(7,2));
         igra.printGame();
         //igra.randomGenerateGame();
         BackTracking alg = new BackTracking(igra,1);
@@ -466,6 +466,11 @@ class BackTracking{
         vision.seeCells(game,mind,position);
     }
     void takeCloak(){
+        for (int i=0;i<9;i++){
+            for (int j=0; j<9;j++){
+                mind[i][j].unvisited=true;
+            }
+        }
         hasCloak=true;
         traceCloak=(Stack<Coordinates>) trace.clone();
         trace.clear();
