@@ -450,6 +450,14 @@ class BackTracking{
 
         return new Coordinates(-1,-1);
     }
+
+    /**
+     * The algorithm
+     * first checks if Harry is caught, then moves to the new cell, marks it as a visited, take all object on it. Proceed next call,
+     * if win conditions are not met.
+     * @param cellMoveInto coordinates of the cell where Harry moves into
+     * @return true if found the path to exit with book and didn't get caught, false otherwise
+     */
     boolean move(Coordinates cellMoveInto){
         if (cellMoveInto.getX()==-1&&cellMoveInto.getY()==-1){
             return false;
@@ -499,6 +507,11 @@ class BackTracking{
 
         return false;
     }
+
+    /**
+     * Function that allows Harry to take object from the cell where he is at the moment
+     * @return true if found the exit and the book was taken, false otherwise
+     */
     boolean take(){
         ArrayList<String> insides = game.space[position.getX()][position.getY()].elements;
         boolean closed=false;
@@ -511,7 +524,7 @@ class BackTracking{
                 if (!hasCloak){
                     beforeBook=false;
                 }
-                reBuild();
+                takeBook();
             }
             if ((insides.get(0).equals("E"))&&(hasBook)){
                 return true;
@@ -526,6 +539,15 @@ class BackTracking{
         }
         return false;
     }
+
+    /**
+     * This function prints mind map of the algorithm for debugging
+     * "H" means position of Harry
+     * "-" means safe
+     * "~" means cloakParsable
+     * "?" means unknown
+     * "*" means inspected
+     */
     void printCells(){
         for (int i=8;i>=0;i--){
             for (int j=0;j<9;j++){
@@ -539,7 +561,11 @@ class BackTracking{
                     if (mind[j][i].typeOfCell==memInsides.cloakParseable){
                         System.out.print("~");
                     } else {
-                        System.out.print("*");
+                        if (mind[j][i].typeOfCell==memInsides.unknown){
+                            System.out.print("?");
+                        } else {
+                            System.out.print("*");
+                        }
                     }
                 }
                 System.out.print(" ");
@@ -547,7 +573,12 @@ class BackTracking{
             System.out.println();
         }
     }
-    void reBuild(){
+
+    /**
+     * This function is called when Harry found the book. It marks all cells as unvisited.
+     * copy the trace and clears it, then proceeds the algorithm
+     */
+    void takeBook(){
         for (int i=0;i<9;i++){
             for (int j=0; j<9;j++){
                 mind[i][j].unvisited=true;
@@ -558,6 +589,10 @@ class BackTracking{
         mind[position.getX()][position.getY()].unvisited=false;
         vision.seeCells(game,mind,position);
     }
+
+    /**
+     * the same function as takeBook,but is called when Harry found the cloak
+     */
     void takeCloak(){
         for (int i=0;i<9;i++){
             for (int j=0; j<9;j++){
@@ -570,6 +605,10 @@ class BackTracking{
         mind[position.getX()][position.getY()].unvisited=false;
         vision.seeCells(game,mind,position);
     }
+
+    /**
+     * Function that calls the algorithm and prints the result
+     */
     void printResult(){
         if (move(getNewCell())){
             if (hasCloak){
@@ -652,11 +691,22 @@ class BackTracking{
         }
     }
 }
+
+/**
+ * This class works with mind maps of the algorithms. It checks if the cell is safe, cloakParsable or inspected
+ */
 class Vision{
     int perception;
     Vision(int n){
         perception=n;
     }
+
+    /**
+     * This function checks cells' type from the current position
+     * @param game the game, from which it takes data about safety of cells
+     * @param mind the mind map of the algorithm that needs to be updated
+     * @param position current position of Harry, from which he perceives information about cells
+     */
     void seeCells(Game game,MemoryCell[][] mind,Coordinates position){
 
         if (perception==1) {
@@ -863,6 +913,14 @@ class Vision{
             }
         }
     }
+
+    /**
+     * This function is used for the first check of cells type
+     * for perception 1 it just calls seeCells function, but for perception 2 it also decides which cells are theoretically unsafe
+     * @param game the game, from which it takes data about safety of cells
+     * @param mind the mind map of the algorithm that needs to be updated
+     * @param position current position of Harry, from which he perceives information about cells
+     */
     void firstSee(Game game,MemoryCell[][] mind,Coordinates position){
         if (perception==1) {
             seeCells(game,mind,position);
@@ -912,6 +970,12 @@ class Vision{
             checkCloakSafe(mind,position);
         }
     }
+
+    /**
+     * this function updates information about all neighbours of the chosen cell
+     * @param mind the mind map of the algorithm that needs to be updated
+     * @param position position, neighbours of which are need to be updated
+     */
     void checkCloakSafe(MemoryCell[][] mind,Coordinates position){
         if (position.getX() < 8) {
             if (mind[position.getX()+1][position.getY()].typeOfCell==memInsides.inspected) {
@@ -977,6 +1041,11 @@ class Vision{
             }
         }
     }
+
+    /**
+     * this function calls checkCloakSafe function for every cell of the mind map
+     * @param   mind map of the algorithm that needs to be updated
+     */
     void checkAllCloakSafe(MemoryCell[][] mind){
         for (int i=0;i<9;i++){
             for (int j=0;j<9;j++){
@@ -988,6 +1057,11 @@ class Vision{
         }
     }
 }
+
+/**
+ * This class extends from the MemoryCell class. It has additional information required for correct work
+ * of the A star algorithm
+ */
 class StarCell extends MemoryCell implements Comparable<StarCell>{
     double h,f;
     int x,y,g;
@@ -1004,6 +1078,7 @@ class StarCell extends MemoryCell implements Comparable<StarCell>{
         h=0;
         typeOfCell=memInsides.unknown;
     }
+    // Each time we change G, we have to recalculate h
     void setG(int g){
         this.g=g;
         f=g+h;
@@ -1020,6 +1095,13 @@ class StarCell extends MemoryCell implements Comparable<StarCell>{
         return Objects.hash(g, h, f, x, y, parentX, parentY);
     }
 
+    /**
+     * This function compares two StarCells
+     * first it checks that both are safe,if not then the safest is better
+     * After that it compares f value to choose the smallest one, in case of the same f value it compares h(heuristics)
+     * @param o StarCell to compare with
+     * @return -1 is better(has less values, safe); 0 if they are equal; 1 if worse than the comparable one
+     */
     @Override
     public int compareTo(StarCell o) {
         if (this.typeOfCell==memInsides.safe&&o.typeOfCell==memInsides.unknown){
