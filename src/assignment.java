@@ -4,9 +4,17 @@ import sun.misc.Queue;
 import java.sql.SQLOutput;
 import java.util.*;
 
+/**
+ * This enum is used for describing elements in the cells of the field
+ */
 enum insides {
     Harry,Filch,Book,Cloak,Norris,Exit,inspectorZone
 }
+
+/**
+ * This class is used for describing positions of object on the field
+ * Integer values x and y are the coordinates
+ */
 class Coordinates{
     int x,y;
     Coordinates(){
@@ -23,6 +31,11 @@ class Coordinates{
         return y;
     }
 
+    /**
+     *
+     * @param o - object to compare with
+     * @return true if it's the same object, or they have the same coordinates
+     */
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -36,23 +49,34 @@ class Coordinates{
         return Objects.hash(x, y);
     }
 }
+
+/**
+ * Class that has main function
+ */
 public class assignment {
     public static void main(String[] args) {
         Game igra= new Game();
         igra.setGame(new Coordinates(0,0),new Coordinates(1,5),new Coordinates(3,1),new Coordinates(4,6),new Coordinates(0,1),new Coordinates(4,3));
-        int i=100;
-        igra.printGame();
+        int i=1000;
+        //igra.printGame();
         ArrayList<Coordinates> answer;
-        BackTracking backTracking= new BackTracking(igra,1);
+        while (i>0){
+            igra.randomGenerateGame();
+            if (igra.space[igra.Harry.getX()][igra.Harry.getY()].isInspected()){
+                continue;
+            }
+            AStar aStar= new AStar(1,igra);
+            answer=aStar.algorithm();
+            i--;
+        }
         igra.prepareMap();
-        AStar aStar= new AStar(2,igra);
-        answer=aStar.algorithm();
-        aStar.printPath(answer);
-
-
    }
 }
 
+/**
+ * Class that is responsible for the map. It checks if the input is correct, can generate random map, can print it,
+ * contains information about the objects.
+ */
 class Game {
     cell[][] space = new cell[9][9];
     Coordinates Filch = new Coordinates();
@@ -70,6 +94,16 @@ class Game {
         }
     }
 
+    /**
+     * This method checks the input
+     * @param H Coordinates of Harry Potter
+     * @param F Coordinates of Argus Filch
+     * @param N Coordinates of cat Norris
+     * @param B Coordinates of the book
+     * @param C Coordinates of the invisibility cloak
+     * @param E Coordinates of the exit
+     * @return true if the input is valid, false otherwise
+     */
     boolean setGame(Coordinates H,Coordinates F,Coordinates N,Coordinates B,Coordinates C,Coordinates E){
         if (((Math.abs(B.getX()-F.getX())<3)&&(Math.abs(B.getY()-F.getY())<3))||((Math.abs(B.getX()-N.getX())<2)&&(Math.abs(B.getY()-N.getY())<2))){
             return false;
@@ -92,10 +126,10 @@ class Game {
         prepareMap();
         return true;
     }
+
     /**
-    * This method prepares the map for the algorithm, setting the environment in 2d array of ints
-    *
-    * */
+     * This method prepares the map for the algorithm, setting the environment in 2d array of cells
+     */
     void prepareMap(){
         for (int i=0;i<9;i++){
             for (int j=0;j<9;j++){
@@ -119,6 +153,11 @@ class Game {
         space[Cloak.getX()][Cloak.getY()].addInCell(insides.Cloak);
         space[Exit.getX()][Exit.getY()].addInCell(insides.Exit);
     }
+
+    /**
+     * Simple method, that randomly generates Coordinates of the objects (except Harry, that always at 0,0)
+     * and passes them to the setGAme function, until it returns true
+     */
     void randomGenerateGame(){
         boolean generate=true;
         while(generate) {
@@ -131,6 +170,10 @@ class Game {
             generate=!setGame(H,F,N,B,C,E);
         }
     }
+
+    /**
+     * This method prints the map in the console
+     */
     void printGame(){
         for (int i=8;i>=0;i--){
             for (int j=0; j<9;j++){
@@ -142,9 +185,18 @@ class Game {
     }
 }
 
+/**
+ * This class represents cell in the map grid
+ * Each cell contains ArrayList of elements stored in it
+ */
 class cell{
     ArrayList<String> elements= new ArrayList<>();
     boolean inspected;
+
+    /**
+     * Function that adds an element into a cell
+     * @param actorToAdd - element that added
+     */
     void addInCell(insides actorToAdd){
         switch (actorToAdd){
             case Book:
@@ -174,6 +226,10 @@ class cell{
     boolean isInspected(){
         return inspected;
     }
+
+    /**
+     * Function that print stored elements into console
+     */
     void print(){
         if (elements.size()==0){
             if (inspected){
@@ -186,25 +242,43 @@ class cell{
             System.out.print(elem);
         }
     }
+
+    /**
+     * This function clears cell's inside
+     */
     void prepare(){
         elements.clear();
         inspected=false;
     }
 }
 
+/**
+ * enum for MemoryCell,helps to describe what the algorithm knows about a specific cell
+ */
 enum memInsides{
     unknown,safe,inspected,cloakParseable
 }
 
+/**
+ * Special class for cells of the grids in the algorithms
+ */
 class MemoryCell {
     memInsides typeOfCell;
     boolean unvisited;
+
+    /**
+     * By default, we don't know the type of cell and didn't visit it.
+     */
     MemoryCell(){
         typeOfCell=memInsides.unknown;
         unvisited=true;
     }
 }
 
+/**
+ * This class represents the first algorithm - Backtracking
+ * The main Idea of this algorithm look through all safe unvisited cells, go into one of them, repeat till all cells are visited or win
+ */
 class BackTracking{
     int perception;
     Game game=new Game();
@@ -216,6 +290,11 @@ class BackTracking{
     Stack<Coordinates> traceCloak= new Stack<>();
     MemoryCell[][] mind=new MemoryCell[9][9];
 
+    /**
+     * Sets the environment
+     * @param game the map to play on
+     * @param per perception of Harry (1 or 2)
+     */
     BackTracking(Game game,int per){
         for (int i=0;i<9;i++){
             for (int j=0; j<9;j++){
@@ -235,6 +314,15 @@ class BackTracking{
         vision.firstSee(game,mind,position);
         printResult();
     }
+
+    /**
+     * Looking for the first available cell with the next priority:
+     * 1) safe cells
+     * 2) cloakParsable cell, if Harry has the cloak
+     * 3) unknown type of cells (possible only on the first few turns with perception 2
+     * Starts with cell on the right from the current, then counterclockwise
+     * @return first found cell or [-1,-1] otherwise
+     */
     Coordinates getNewCell(){
         if (position.getX()<8){
             if (mind[position.getX()+1][position.getY()].typeOfCell==memInsides.safe&&mind[position.getX()+1][position.getY()].unvisited){
@@ -672,7 +760,7 @@ class Vision{
                     }
                 } else {
                     mind[position.getX() + 1][position.getY() - 1].typeOfCell = memInsides.safe;
-                    checkCloakSafe(mind,new Coordinates(position.getX() +1,position.getY()+1));
+                    checkCloakSafe(mind,new Coordinates(position.getX() +1,position.getY()-1));
                 }
             }
         }
@@ -1379,13 +1467,10 @@ class AStar{
                 }
                 vision.checkAllCloakSafe(mind);
             }
-            // TODO: complete this pathfind
             if (book!=null&&reachable){
                 path2 = getPath(game.Harry,cloak);
-                printPath(path2);
                 path2.remove(0);
                 buffer = getCloakPath(cloak,book);
-                printPath(buffer);
                 buffer.addAll(path2);
                 buffer.remove(0);
                 path2 = getCloakPath(book,game.Exit);
