@@ -108,6 +108,10 @@ public class assignment {
         }
    }
 }
+
+/**
+ * This class works with console input. used for getting data from user
+ */
 class Talker{
     Talker(){
 
