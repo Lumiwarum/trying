@@ -1,7 +1,3 @@
-import com.sun.xml.internal.bind.v2.TODO;
-import sun.misc.Queue;
-
-import java.sql.SQLOutput;
 import java.util.*;
 
 /**
@@ -56,20 +52,181 @@ class Coordinates{
 public class assignment {
     public static void main(String[] args) {
         Game igra= new Game();
-        igra.setGame(new Coordinates(0,0),new Coordinates(1,5),new Coordinates(3,1),new Coordinates(4,6),new Coordinates(0,1),new Coordinates(4,3));
+        igra.setGame(new Coordinates(0,0),new Coordinates(7,3),new Coordinates(4,1),new Coordinates(3,3),new Coordinates(0,5),new Coordinates(8,0));
         int i=1000;
-        //igra.printGame();
+        long t1,t2,sizeTrace=0;
+        int[] traceSize1= new int[40];
+        int[] traceSize2= new int[40];
+        int[] traceSize3= new int[40];
+        int[] traceSize4= new int[40];
+        for (int l=0;l<40;l++){
+            traceSize2[l]=0;
+            traceSize1[l]=0;
+            traceSize3[l]=0;
+            traceSize4[l]=0;
+        }
+        int win1=0,win2=0,win3=0,win4=0,lose1=0,lose2=0,lose3=0,lose4=0;
         ArrayList<Coordinates> answer;
+        ArrayList<Long> time1=new ArrayList<>();
+        ArrayList<Long> time2=new ArrayList<>();
+        ArrayList<Long> time3=new ArrayList<>();
+        ArrayList<Long> time4=new ArrayList<>();
+
         while (i>0){
             igra.randomGenerateGame();
+            AStar aStar1= new AStar(1,igra);
+            AStar aStar2= new AStar(2,igra);
+            BackTracking backTracking3= new BackTracking(igra,1);
+            BackTracking backTracking4=new BackTracking(igra,2);
             if (igra.space[igra.Harry.getX()][igra.Harry.getY()].isInspected()){
                 continue;
             }
-            AStar aStar= new AStar(1,igra);
-            answer=aStar.algorithm();
+            t1=System.currentTimeMillis();
+            answer=aStar1.algorithm();
+            t2=System.currentTimeMillis();
+            if (answer.size()==1){
+                if(answer.get(0).getX()==-1&&answer.get(0).getY()==-1){
+                    lose1++;
+                }
+            } else {
+                win1++;
+                traceSize1[answer.size()]++;
+                time1.add(t2-t1);
+            }
+            igra.prepareMap();
+
+            t1=System.currentTimeMillis();
+            answer=aStar2.algorithm();
+            t2=System.currentTimeMillis();
+            if (answer.size()==1){
+                if(answer.get(0).getX()==-1&&answer.get(0).getY()==-1){
+                    lose2++;
+                }
+            } else {
+                win2++;
+                traceSize2[answer.size()]++;
+                time2.add(t2-t1);
+            }
+            igra.prepareMap();
+
+            t1=System.currentTimeMillis();
+            answer=backTracking3.getResult();
+            t2=System.currentTimeMillis();
+            if (answer.size()==1){
+                if(answer.get(0).getX()==-1&&answer.get(0).getY()==-1){
+                    lose3++;
+                }
+            } else {
+                win3++;
+                traceSize3[answer.size()]++;
+                time3.add(t2-t1);
+            }
+            igra.prepareMap();
+
+            t1=System.currentTimeMillis();
+            answer=backTracking4.getResult();
+            t2=System.currentTimeMillis();
+            if (answer.size()==1){
+                if(answer.get(0).getX()==-1&&answer.get(0).getY()==-1){
+                    lose4++;
+                }
+            } else {
+                win4++;
+                traceSize4[answer.size()]++;
+                time4.add(t2-t1);
+            }
+
             i--;
         }
-        igra.prepareMap();
+        float anst1=0,anst2=0,anst3=0,anst4=0,dist1=0,dist2=0,dist3=0,dist4=0;
+        for (int l=0;l<time1.size();l++){
+            anst1+=time1.get(l);
+        }
+        anst1=anst1/time1.size();
+
+        for (int l=0;l<time2.size();l++){
+            anst2+=time2.get(l);
+        }
+        anst2=anst2/time2.size();
+
+        for (int l=0;l<time3.size();l++){
+            anst3+=time3.get(l);
+        }
+        anst3=anst3/time3.size();
+
+        for (int l=0;l<time4.size();l++){
+            anst4+=time4.get(l);
+        }
+        anst4=anst4/time4.size();
+
+        for (int l=0;l<time1.size();l++){
+            dist1+=Math.pow(time1.get(l)-anst1,2);
+        }
+        dist1=dist1/time1.size();
+
+        for (int l=0;l<time2.size();l++){
+            dist2+=Math.pow(time2.get(l)-anst2,2);
+        }
+        dist2=dist2/time2.size();
+
+        for (int l=0;l<time3.size();l++){
+            dist3+=Math.pow(time3.get(l)-anst3,2);
+        }
+        dist3=dist3/time3.size();
+
+        for (int l=0;l<time4.size();l++){
+            dist4+=Math.pow(time4.get(l)-anst4,2);
+        }
+        dist4=dist4/time4.size();
+
+        System.out.println("1st "+anst1+" "+dist1);
+        System.out.println("2nd "+anst2+" "+dist2);
+        System.out.println("3rd "+anst3+" "+dist3);
+        System.out.println("4th "+anst4+" "+dist4);
+
+        double step1=0,step2=0,step3=0,step4=0,distep1=0,distep2=0,distep3=0,distep4=0;
+
+        for (int l=2;l<40;l++){
+            step1+=traceSize1[l]*l;
+        }
+        step1=step1/time1.size();
+        for (int l=2;l<40;l++){
+            distep1=traceSize1[l]*Math.pow(l-step1,2);
+        }
+        distep1=distep1/time1.size();
+
+        for (int l=2;l<40;l++){
+            step2+=traceSize2[l]*l;
+        }
+        step2=step2/time2.size();
+        for (int l=2;l<40;l++){
+            distep2=traceSize2[l]*Math.pow(l-step2,2);
+        }
+        distep2=distep2/time2.size();
+
+        for (int l=2;l<40;l++){
+            step3+=traceSize3[l]*l;
+        }
+        step3=step3/time3.size();
+        for (int l=2;l<40;l++){
+            distep3=traceSize3[l]*Math.pow(l-step3,2);
+        }
+        distep3=distep3/time3.size();
+
+        for (int l=2;l<40;l++){
+            step4+=traceSize4[l]*l;
+        }
+        step4=step4/time4.size();
+        for (int l=2;l<40;l++){
+            distep4=traceSize4[l]*Math.pow(l-step4,2);
+        }
+        System.out.println(distep1);
+        distep4=distep4/time4.size();
+
+        System.out.println("1st step "+step1+" "+distep1);
+        System.out.println("2nd step "+step2+" "+distep2);
+        System.out.println("3rd step "+step3+" "+distep3);
+        System.out.println("4th step "+step4+" "+distep4);
    }
 }
 
@@ -312,7 +469,6 @@ class BackTracking{
         mind[position.getX()][position.getY()].unvisited=false;
         take();
         vision.firstSee(game,mind,position);
-        printResult();
     }
 
     /**
@@ -471,7 +627,7 @@ class BackTracking{
         if (caught){
             return false;
         }
-        if (trace.size()>17){
+        if (trace.size()>9){
             return false;
         }
         Coordinates previous= new Coordinates(position.getX(), position.getY());
@@ -609,7 +765,8 @@ class BackTracking{
     /**
      * Function that calls the algorithm and prints the result
      */
-    void printResult(){
+    ArrayList<Coordinates> getResult(){
+        ArrayList<Coordinates> path= new ArrayList<>();
         if (move(getNewCell())){
             if (hasCloak){
                 if (beforeBook) {
@@ -625,7 +782,7 @@ class BackTracking{
                         answer.add(traceCloak.pop());
                     }
                     while (!answer.isEmpty()){
-                        System.out.print("["+answer.peek().getX()+","+answer.pop().getY()+"]");
+                        path.add(new Coordinates(answer.peek().getX(),answer.pop().getY()));
                     }
                 } else {
                     Stack<Coordinates> answer=new Stack<>();
@@ -640,7 +797,7 @@ class BackTracking{
                         answer.add(traceBook.pop());
                     }
                     while (!answer.isEmpty()){
-                        System.out.print("["+answer.peek().getX()+","+answer.pop().getY()+"]");
+                        path.add(new Coordinates(answer.peek().getX(),answer.pop().getY()));
                     }
                 }
             } else {
@@ -653,7 +810,7 @@ class BackTracking{
                     answer.add(traceBook.pop());
                 }
                 while (!answer.isEmpty()){
-                    System.out.print("["+answer.peek().getX()+","+answer.pop().getY()+"]");
+                    path.add(new Coordinates(answer.peek().getX(),answer.pop().getY()));
                 }
             }
         } else {
@@ -680,15 +837,16 @@ class BackTracking{
                         answer.add(traceCloak.pop());
                     }
                     while (!answer.isEmpty()){
-                        System.out.print("["+answer.peek().getX()+","+answer.pop().getY()+"]");
+                        path.add(new Coordinates(answer.peek().getX(),answer.pop().getY()));
                     }
                 } else {
-                    System.out.println("no way");
+                    path.add(new Coordinates(-1,-1));
                 }
             } else {
-                System.out.println("no way");
+                path.add(new Coordinates(-1,-1));
             }
         }
+        return path;
     }
 }
 
@@ -1582,8 +1740,10 @@ class AStar{
                         }
                     }
                 }
+                position= new Coordinates(game.Harry.getX(),game.Harry.getY());
                  if (!BFSCloak()){
                      System.out.println("wrong");
+                     game.printGame();
                  }
                 while (!cloakParsable.isEmpty()){
                     mind[cloakParsable.get(0).getX()][cloakParsable.get(0).getY()].typeOfCell=memInsides.cloakParseable;
