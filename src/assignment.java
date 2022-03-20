@@ -51,6 +51,7 @@ class Coordinates{
  */
 public class assignment {
     public static void main(String[] args) {
+        System.out.println("Type 0 for random generation or 1 for manual insertion. For more information about input format  check the report");
         Talker talker= new Talker();
         Game game = new Game();
         ArrayList<Coordinates> cords=new ArrayList<>();
@@ -76,6 +77,9 @@ public class assignment {
             cordsBuffer.add(new Coordinates(cords.get(i).getX(),cords.get(i).getY()));
         }
         int perception = talker.getPerception();
+
+        game.printGame();
+        System.out.println();
         long t2,t1=System.currentTimeMillis();
         BackTracking backTracking= new BackTracking(game,perception);
         cords=backTracking.getResult();
@@ -289,13 +293,20 @@ class Game {
      */
     void printGame(){
         for (int i=8;i>=0;i--){
+            System.out.print(i+" ");
             for (int j=0; j<9;j++){
                 space[j][i].print();
                 System.out.print(" ");
             }
             System.out.println();
         }
+        System.out.print("  ");
+        for (int l=0;l<9;l++){
+            System.out.print(l+" ");
+        }
     }
+
+
 }
 
 /**
