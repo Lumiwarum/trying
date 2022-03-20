@@ -51,189 +51,128 @@ class Coordinates{
  */
 public class assignment {
     public static void main(String[] args) {
-        Game igra= new Game();
-        igra.setGame(new Coordinates(0,0),new Coordinates(7,3),new Coordinates(4,1),new Coordinates(3,3),new Coordinates(0,5),new Coordinates(8,0));
-        int i=1000;
-        long t1,t2,sizeTrace=0;
-        int[] traceSize1= new int[40];
-        int[] traceSize2= new int[40];
-        int[] traceSize3= new int[40];
-        int[] traceSize4= new int[40];
-        for (int l=0;l<40;l++){
-            traceSize2[l]=0;
-            traceSize1[l]=0;
-            traceSize3[l]=0;
-            traceSize4[l]=0;
-        }
-        int win1=0,win2=0,win3=0,win4=0,lose1=0,lose2=0,lose3=0,lose4=0;
-        ArrayList<Coordinates> answer;
-        ArrayList<Long> time1=new ArrayList<>();
-        ArrayList<Long> time2=new ArrayList<>();
-        ArrayList<Long> time3=new ArrayList<>();
-        ArrayList<Long> time4=new ArrayList<>();
-
-        while (i>0){
-            igra.randomGenerateGame();
-            AStar aStar1= new AStar(1,igra);
-            AStar aStar2= new AStar(2,igra);
-            BackTracking backTracking3= new BackTracking(igra,1);
-            BackTracking backTracking4=new BackTracking(igra,2);
-            if (igra.space[igra.Harry.getX()][igra.Harry.getY()].isInspected()){
-                continue;
-            }
-            t1=System.currentTimeMillis();
-            answer=aStar1.algorithm();
-            t2=System.currentTimeMillis();
-            if (answer.size()==1){
-                if(answer.get(0).getX()==-1&&answer.get(0).getY()==-1){
-                    lose1++;
+        Talker talker= new Talker();
+        Game game = new Game();
+        ArrayList<Coordinates> cords=new ArrayList<>();
+        int response= talker.getType();
+        if (response==0){
+            game.randomGenerateGame();
+        } else {
+            while (true){
+                cords=talker.getData();
+                if (game.setGame(cords.get(0),cords.get(1),cords.get(2),cords.get(3),cords.get(4),cords.get(5))){
+                    break;
                 }
-            } else {
-                win1++;
-                traceSize1[answer.size()]++;
-                time1.add(t2-t1);
             }
-            igra.prepareMap();
-
-            t1=System.currentTimeMillis();
-            answer=aStar2.algorithm();
-            t2=System.currentTimeMillis();
-            if (answer.size()==1){
-                if(answer.get(0).getX()==-1&&answer.get(0).getY()==-1){
-                    lose2++;
-                }
-            } else {
-                win2++;
-                traceSize2[answer.size()]++;
-                time2.add(t2-t1);
+        }
+        ArrayList<Coordinates> cordsBuffer = new ArrayList<>();
+        for (int i=0;i<cords.size();i++){
+            cordsBuffer.add(new Coordinates(cords.get(i).getX(),cords.get(i).getY()));
+        }
+        int perception = talker.getPerception();
+        long t2,t1=System.currentTimeMillis();
+        BackTracking backTracking= new BackTracking(game,perception);
+        cords=backTracking.getResult();
+        t2=System.currentTimeMillis();
+        t2=t2-t1;
+        System.out.println("Backtracking Algorithm");
+        if (cords.size()>1){
+            System.out.println("Win");
+            System.out.println(cords.size());
+            while (!cords.isEmpty()){
+                System.out.print("["+cords.get(0).getX()+","+cords.get(0).getY()+"]");
+                cords.remove(0);
             }
-            igra.prepareMap();
-
-            t1=System.currentTimeMillis();
-            answer=backTracking3.getResult();
-            t2=System.currentTimeMillis();
-            if (answer.size()==1){
-                if(answer.get(0).getX()==-1&&answer.get(0).getY()==-1){
-                    lose3++;
-                }
-            } else {
-                win3++;
-                traceSize3[answer.size()]++;
-                time3.add(t2-t1);
-            }
-            igra.prepareMap();
-
-            t1=System.currentTimeMillis();
-            answer=backTracking4.getResult();
-            t2=System.currentTimeMillis();
-            if (answer.size()==1){
-                if(answer.get(0).getX()==-1&&answer.get(0).getY()==-1){
-                    lose4++;
-                }
-            } else {
-                win4++;
-                traceSize4[answer.size()]++;
-                time4.add(t2-t1);
-            }
-
-            i--;
+            System.out.println();
+            System.out.println("Time taken in ms: "+t2);
+        } else {
+            System.out.println("Lose");
         }
-        float anst1=0,anst2=0,anst3=0,anst4=0,dist1=0,dist2=0,dist3=0,dist4=0;
-        for (int l=0;l<time1.size();l++){
-            anst1+=time1.get(l);
-        }
-        anst1=anst1/time1.size();
 
-        for (int l=0;l<time2.size();l++){
-            anst2+=time2.get(l);
-        }
-        anst2=anst2/time2.size();
+        System.out.println();
+        Game game1 = new Game();
+        game1.setGame(cordsBuffer.get(0),cordsBuffer.get(1),cordsBuffer.get(2),cordsBuffer.get(3),cordsBuffer.get(4),cordsBuffer.get(5));
 
-        for (int l=0;l<time3.size();l++){
-            anst3+=time3.get(l);
+        AStar aStar = new AStar(perception,game1);
+        t1=System.currentTimeMillis();
+        cords=aStar.algorithm();
+        t2=System.currentTimeMillis();
+        t2=t2-t1;
+        System.out.println("A star Algorithm");
+        if (cords.size()>1){
+            System.out.println("Win");
+            aStar.printPath(cords);
+            System.out.println("Time taken in ms: "+t2);
+        } else {
+            System.out.println("Lose");
         }
-        anst3=anst3/time3.size();
-
-        for (int l=0;l<time4.size();l++){
-            anst4+=time4.get(l);
-        }
-        anst4=anst4/time4.size();
-
-        for (int l=0;l<time1.size();l++){
-            dist1+=Math.pow(time1.get(l)-anst1,2);
-        }
-        dist1=dist1/time1.size();
-
-        for (int l=0;l<time2.size();l++){
-            dist2+=Math.pow(time2.get(l)-anst2,2);
-        }
-        dist2=dist2/time2.size();
-
-        for (int l=0;l<time3.size();l++){
-            dist3+=Math.pow(time3.get(l)-anst3,2);
-        }
-        dist3=dist3/time3.size();
-
-        for (int l=0;l<time4.size();l++){
-            dist4+=Math.pow(time4.get(l)-anst4,2);
-        }
-        dist4=dist4/time4.size();
-
-        System.out.println("1st "+anst1+" "+dist1);
-        System.out.println("2nd "+anst2+" "+dist2);
-        System.out.println("3rd "+anst3+" "+dist3);
-        System.out.println("4th "+anst4+" "+dist4);
-
-        double step1=0,step2=0,step3=0,step4=0,distep1=0,distep2=0,distep3=0,distep4=0;
-
-        for (int l=2;l<40;l++){
-            step1+=traceSize1[l]*l;
-        }
-        step1=step1/time1.size();
-        for (int l=2;l<40;l++){
-            distep1+=traceSize1[l]*Math.pow(l-step1,2);
-        }
-        distep1=distep1/time1.size();
-
-        for (int l=2;l<40;l++){
-            step2+=traceSize2[l]*l;
-        }
-        step2=step2/time2.size();
-        for (int l=2;l<40;l++){
-            distep2+=traceSize2[l]*Math.pow(l-step2,2);
-        }
-        distep2=distep2/time2.size();
-
-        for (int l=2;l<40;l++){
-            step3+=traceSize3[l]*l;
-        }
-        step3=step3/time3.size();
-        for (int l=2;l<40;l++){
-            distep3+=traceSize3[l]*Math.pow(l-step3,2);
-        }
-        distep3=distep3/time3.size();
-
-        for (int l=2;l<40;l++){
-            step4+=traceSize4[l]*l;
-        }
-        step4=step4/time4.size();
-        for (int l=2;l<40;l++){
-            distep4+=traceSize4[l]*Math.pow(l-step4,2);
-        }
-        distep4=distep4/time4.size();
-
-        System.out.println("1st step "+step1+" "+distep1);
-        System.out.println("2nd step "+step2+" "+distep2);
-        System.out.println("3rd step "+step3+" "+distep3);
-        System.out.println("4th step "+step4+" "+distep4);
-
-        System.out.println("1st winrate "+win1+" "+lose1);
-        System.out.println("2nd winrate "+win2+" "+lose2);
-        System.out.println("3rd winrate "+win3+" "+lose3);
-        System.out.println("4th winrate "+win4+" "+lose4);
    }
 }
+class Talker{
+    Talker(){
 
+    }
+    int getType(){
+        Scanner sc = new Scanner(System.in);
+        int info;
+        while (true){
+            info=sc.nextInt();
+            if (info==0||info==1){
+                break;
+            }
+        }
+        return info;
+    }
+    int getPerception(){
+        Scanner sc = new Scanner(System.in);
+        int info;
+        while (true){
+            info=sc.nextInt();
+            if (info==1||info==2){
+                break;
+            }
+        }
+        return info;
+    }
+    ArrayList<Coordinates> getData(){
+        Scanner sc = new Scanner(System.in);
+        String info;
+        String[] pos;
+        ArrayList<Coordinates> data= new ArrayList<>();
+        while (true){
+            data.clear();
+            info=sc.nextLine();
+            pos=info.split(" ");
+            if (pos.length!=6){
+                System.out.println("invalid input");
+                continue;
+            }
+            String[] cords;
+            for (int i=0;i<6;i++){
+                if (pos[i].length()>2){
+                    pos[i]=pos[i].substring(1);
+                    pos[i]=pos[i].substring(0,pos[i].length()-1);
+                    cords=pos[i].split(",");
+                    if (cords.length!=2){
+                        System.out.println("invalid input");
+                        continue;
+                    }
+                    data.add(new Coordinates(Integer.parseInt(cords[0]),Integer.parseInt(cords[1])));
+                }
+            }
+            if (data.size()==6){
+                for (int i=0;i<6;i++){
+                    if (data.get(i).getX()<0||data.get(i).getX()>8||data.get(i).getY()<0||data.get(i).getY()>8){
+                        System.out.println("invalid boundaries");
+                        continue;
+                    }
+                }
+                break;
+            }
+        }
+        return data;
+    }
+}
 /**
  * Class that is responsible for the map. It checks if the input is correct, can generate random map, can print it,
  * contains information about the objects.
@@ -1317,8 +1256,6 @@ class AStar{
                 mind[i][j].y=j;
             }
         }
-        BFS();
-        vision.checkAllCloakSafe(mind);
     }
 
     /**
@@ -1698,6 +1635,8 @@ class AStar{
      * @return The path, if there is no such path returns ArrayList with one element -[-1,-1]
      */
     ArrayList<Coordinates> algorithm(){
+        BFS();
+        vision.checkAllCloakSafe(mind);
         open.clear();
         closed.clear();
         ArrayList<Coordinates> path,path2,path3,buffer;
