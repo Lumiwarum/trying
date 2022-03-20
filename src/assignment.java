@@ -191,7 +191,7 @@ public class assignment {
         }
         step1=step1/time1.size();
         for (int l=2;l<40;l++){
-            distep1=traceSize1[l]*Math.pow(l-step1,2);
+            distep1+=traceSize1[l]*Math.pow(l-step1,2);
         }
         distep1=distep1/time1.size();
 
@@ -200,7 +200,7 @@ public class assignment {
         }
         step2=step2/time2.size();
         for (int l=2;l<40;l++){
-            distep2=traceSize2[l]*Math.pow(l-step2,2);
+            distep2+=traceSize2[l]*Math.pow(l-step2,2);
         }
         distep2=distep2/time2.size();
 
@@ -209,7 +209,7 @@ public class assignment {
         }
         step3=step3/time3.size();
         for (int l=2;l<40;l++){
-            distep3=traceSize3[l]*Math.pow(l-step3,2);
+            distep3+=traceSize3[l]*Math.pow(l-step3,2);
         }
         distep3=distep3/time3.size();
 
@@ -218,15 +218,19 @@ public class assignment {
         }
         step4=step4/time4.size();
         for (int l=2;l<40;l++){
-            distep4=traceSize4[l]*Math.pow(l-step4,2);
+            distep4+=traceSize4[l]*Math.pow(l-step4,2);
         }
-        System.out.println(distep1);
         distep4=distep4/time4.size();
 
         System.out.println("1st step "+step1+" "+distep1);
         System.out.println("2nd step "+step2+" "+distep2);
         System.out.println("3rd step "+step3+" "+distep3);
         System.out.println("4th step "+step4+" "+distep4);
+
+        System.out.println("1st winrate "+win1+" "+lose1);
+        System.out.println("2nd winrate "+win2+" "+lose2);
+        System.out.println("3rd winrate "+win3+" "+lose3);
+        System.out.println("4th winrate "+win4+" "+lose4);
    }
 }
 
