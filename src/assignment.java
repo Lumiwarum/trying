@@ -1129,6 +1129,12 @@ class StarCell extends MemoryCell implements Comparable<StarCell>{
         }
     }
 }
+
+/**
+ * The A star algorithm with several modifications:
+ * before the search it uses bfs to search through all cell, so it'll know the location of objects
+ * after that it calculates several paths and choses the best one
+ */
 class AStar{
     Vision vision;
     StarCell[][] mind= new StarCell[9][9];
@@ -1151,8 +1157,12 @@ class AStar{
         }
         BFS();
         vision.checkAllCloakSafe(mind);
-
     }
+
+    /**
+     * This function adds to the priority queue all acceptable neighbours of this cell.
+     * Also calculates g(and as consequence f) when uses A* algorithm
+     */
     void addCells(){
         if (position.getX() < 8) {
             if (open.contains(mind[position.getX()+1][position.getY()])){
@@ -1307,6 +1317,10 @@ class AStar{
             }
         }
     }
+
+    /**
+     * This function called in BFSCloak algorithm. It allows for harry to go through cloakParsable cell during the BFS algorithm
+     */
     void addCellsBFS(){
         addCells();
         if (cloak!=null) {
@@ -1375,7 +1389,12 @@ class AStar{
             }
         }
     }
-    boolean BFSCloack(){
+
+    /**
+     * Algorithm of BFS that can go through cloakParsable cells. Called if failed normal BFS, but cloak is found
+     * @return False if Harry gets caught, true otherwise
+     */
+    boolean BFSCloak(){
         closed.clear();
         open.clear();
         vision.firstSee(game,mind,position);
@@ -1397,7 +1416,10 @@ class AStar{
         }
         return true;
     }
-    boolean BFS(){
+    /**
+     * Algorithm of BFS that fills mind map with information about cells and stores coordinates of found objects
+     */
+    void BFS(){
         closed.clear();
         open.clear();
         vision.firstSee(game,mind,position);
@@ -1405,20 +1427,17 @@ class AStar{
         while(!open.isEmpty()){
             position.x=open.peek().x;
             position.y=open.poll().y;
-            if (cloak==null&&(mind[position.x][position.y].typeOfCell==memInsides.inspected||mind[position.x][position.y].typeOfCell==memInsides.cloakParseable))
-            {
-                return false;
-            }
-            if ((game.Filch.getX()== position.getX()&&game.Filch.getY()== position.getY())||(game.Norris.getX()== position.getX()&&game.Norris.getY()== position.getY())){
-                return false;
-            }
             closed.add(new Coordinates(position.getX(), position.getY()));
             take();
             vision.seeCells(game,mind,position);
             addCells();
         }
-        return true;
     }
+
+    /**
+     * This function allows Harry to check what can be taken in this cell
+     * Used durnig BFS or BFSCloak
+     */
     void take(){
         ArrayList<String> insides= game.space[position.getX()][position.getY()].elements;
         ArrayList<String> buffer= new ArrayList<>();
@@ -1438,6 +1457,14 @@ class AStar{
         }
         game.space[position.getX()][position.getY()].elements=buffer;
     }
+
+    /**
+     * The "A star" algorithm for finding path between 2 cells
+     * @param start position from which Harry starts
+     * @param end position when Harry should end
+     * @return ArrayList of Coordinates that contains the path in reversed order including both ends. If there is no such path -
+     * it contains only [-1,-1] coordinate
+     */
     ArrayList<Coordinates> getPath(Coordinates start,Coordinates end){
         refreshMind();
         setHeuristic(end);
@@ -1478,6 +1505,13 @@ class AStar{
         }
         return path;
     }
+    /**
+     * The "A star" algorithm for finding path between 2 cells with possibility to go through cloakParsable cells
+     * @param start position from which Harry starts
+     * @param end position wher Harry should end
+     * @return ArrayList of Coordinates that contains the path in reversed order including both ends. If there is no such path -
+     * it contains only [-1,-1] coordinate
+     */
     ArrayList<Coordinates> getCloakPath(Coordinates start,Coordinates end){
         ArrayList<Coordinates> cloakParsable = new ArrayList<>();
         for (int i=0;i<9;i++){
@@ -1495,6 +1529,12 @@ class AStar{
         }
         return ans;
     }
+
+    /**
+     * This function return the result of the algorithm
+     * It calculates all possible paths and chooses the best(shortest) one
+     * @return The path, if there is no such path returns ArrayList with one element -[-1,-1]
+     */
     ArrayList<Coordinates> algorithm(){
         open.clear();
         closed.clear();
@@ -1542,7 +1582,9 @@ class AStar{
                         }
                     }
                 }
-                BFSCloack();
+                 if (!BFSCloak()){
+                     System.out.println("wrong");
+                 }
                 while (!cloakParsable.isEmpty()){
                     mind[cloakParsable.get(0).getX()][cloakParsable.get(0).getY()].typeOfCell=memInsides.cloakParseable;
                     cloakParsable.remove(0);
@@ -1576,14 +1618,22 @@ class AStar{
         }
         System.out.println();
     }
+
+    /**
+     * This function sets diagonal heuristics: cost is one for straight and diagonal move
+     * @param goal the goal around which the heuristics will be calculated
+     */
     void setHeuristic(Coordinates goal){
         for (int i=0;i<9;i++){
             for (int j=0; j<9;j++){
                 mind[i][j].h=Math.max(Math.abs(i- goal.getX()),Math.abs(j- goal.getY()));
-                //mind[i][j].h=Math.sqrt(Math.pow((i-goal.getX()),2)+Math.pow((j-goal.getY()),2));
             }
         }
     }
+
+    /**
+     * Reset parents and costs of cells in the mind map
+     */
     void refreshMind(){
         for (int i=0;i<9;i++){
             for (int j=0;j<9;j++){
@@ -1616,6 +1666,10 @@ class AStar{
             System.out.println();
         }
     }
+
+    /**
+     * prints heuristics of the mind map, used for debugging
+     */
     void printHeuristic(){
         System.out.println();
         for (int i=8;i>=0;i--){
@@ -1626,6 +1680,9 @@ class AStar{
             System.out.println();
         }
     }
+    /**
+     * prints g values of the mind map, used for debugging
+     */
     void printMovements(){
         for (int i=8;i>=0;i--){
             for (int j=0; j<9;j++){
