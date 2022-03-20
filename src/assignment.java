@@ -229,7 +229,7 @@ class BackTracking{
         hasCloak=false;
         caught=false;
         this.game=game;
-        position=this.game.Harry;
+        position=new Coordinates(game.Harry.getX(),game.Harry.getY());
         mind[position.getX()][position.getY()].unvisited=false;
         take();
         vision.firstSee(game,mind,position);
@@ -1306,7 +1306,6 @@ class AStar{
             position.x=mind[previous.x][previous.y].parentX;
             position.y=mind[previous.x][previous.y].parentY;
         }
-        path.add(new Coordinates(position.x, position.y));
         return path;
     }
     ArrayList<Coordinates> getCloakPath(Coordinates start,Coordinates end){
@@ -1383,8 +1382,10 @@ class AStar{
             // TODO: complete this pathfind
             if (book!=null&&reachable){
                 path2 = getPath(game.Harry,cloak);
+                printPath(path2);
                 path2.remove(0);
                 buffer = getCloakPath(cloak,book);
+                printPath(buffer);
                 buffer.addAll(path2);
                 buffer.remove(0);
                 path2 = getCloakPath(book,game.Exit);
